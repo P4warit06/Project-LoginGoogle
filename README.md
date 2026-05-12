@@ -1,5 +1,4 @@
 # Next.js Google Auth — Premium Dark UI
-
 ระบบ Login ToDoDashboard ด้วย Google และ Microsoft On Next.js App Router 
 
 ---
@@ -39,8 +38,6 @@ npm install next-auth framer-motion react-icons
 ```
 
 
----
-
 ##  Environment Variables
 
 1. `.env.local`
@@ -55,8 +52,6 @@ MICROSOFT_TENANT_ID=xxxxx
 
 ```
 
----
-
 ## 🔧 Setting Google OAuth
 1. ไปที่ [Google Cloud Console](https://console.cloud.google.com/)
 2. สร้าง Project ใหม่ หรือเลือก Project ที่มีอยู่
@@ -70,7 +65,6 @@ MICROSOFT_TENANT_ID=xxxxx
    ```
 7. Copy `Client ID` และ `Client Secret` ใส่ `.env.local`
 
----
 
 ## 🎨 Design Decisions
 
@@ -84,8 +78,6 @@ MICROSOFT_TENANT_ID=xxxxx
 | Glass Effect | `backdrop-filter: blur(20px)` |
 | Background | Ambient gradient orbs + noise texture |
 
----
-
 ## Dev Server
 
 ```bash
@@ -93,7 +85,6 @@ npm run dev
 ```
 [http://localhost:3000](http://localhost:3000)
 
----
 
 ## 📝 Notes
 
@@ -101,6 +92,6 @@ npm run dev
 - `components/AuthCard.tsx` เป็น **Client Component** — จัดการ animation + signIn/signOut
 - `app/providers.tsx` ห่อ `SessionProvider` สำหรับ client-side session
 - รูปโปรไฟล์ Google โหลดจาก `lh3.googleusercontent.com` — ตั้งค่า remote patterns ใน `next.config.ts` แล้ว
--  Resource 
--(https://cloud.google.com/free?utm_source=google&utm_medium=cpc&utm_campaign=Cloud-SS-DR-GCP-1713664-GCP-DR-APAC-TH-th-Google-BKWS-MIX-GenericCloud&utm_content=c-Hybrid+%7C+BKWS+-+EXA+%7C+Txt+-+Generic+Cloud-Cloud+Generic-Core+GCP-TH_en-6458750523&utm_term=google%20cloud&gclsrc=aw.ds&gad_source=1&gad_campaignid=12372110337&gclid=CjwKCAjwn4vQBhBsEiwAq3hhN66Tt4GODfHRqppGua5Qi2FyVYVykHFiZXHiTeFoc4FEXmhO2rrT5BoCTYwQAvD_BwE)[Google Cloud] for Login Google 
-- (https://azure.microsoft.com/en-us)[Microsoft Azure For Login Microsoft]
+# Resource 
+- [Google Cloud for Login Google](https://cloud.google.com/free?utm_source=google&utm_medium=cpc&utm_campaign=Cloud-SS-DR-GCP-1713664-GCP-DR-APAC-TH-th-Google-BKWS-MIX-GenericCloud&utm_content=c-Hybrid+%7C+BKWS+-+EXA+%7C+Txt+-+Generic+Cloud-Cloud+Generic-Core+GCP-TH_en-6458750523&utm_term=google%20cloud&gclsrc=aw.ds&gad_source=1&gad_campaignid=12372110337&gclid=CjwKCAjwn4vQBhBsEiwAq3hhN66Tt4GODfHRqppGua5Qi2FyVYVykHFiZXHiTeFoc4FEXmhO2rrT5BoCTYwQAvD_BwE)
+- [Microsoft Azure For Login Microsoft](https://azure.microsoft.com/en-us)
