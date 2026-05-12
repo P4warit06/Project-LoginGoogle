@@ -23,9 +23,7 @@ export default function TodoDashboard() {
   const [input, setInput] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
 
-  // ─────────────────────────────────────
   // Add Todo
-  // ─────────────────────────────────────
   const addTodo = () => {
     if (!input.trim()) return;
 
@@ -40,16 +38,12 @@ export default function TodoDashboard() {
     setInput("");
   };
 
-  // ─────────────────────────────────────
   // Delete Todo
-  // ─────────────────────────────────────
   const deleteTodo = (id: number) => {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
-  // ─────────────────────────────────────
   // Toggle Complete
-  // ─────────────────────────────────────
   const toggleTodo = (id: number) => {
     setTodos((prev) =>
       prev.map((todo) =>
@@ -63,16 +57,12 @@ export default function TodoDashboard() {
     );
   };
 
-  // ─────────────────────────────────────
   // Clear Completed
-  // ─────────────────────────────────────
   const clearCompleted = () => {
     setTodos((prev) => prev.filter((todo) => !todo.completed));
   };
 
-  // ─────────────────────────────────────
   // Filter Todos
-  // ─────────────────────────────────────
   const filteredTodos = useMemo(() => {
     switch (filter) {
       case "active":

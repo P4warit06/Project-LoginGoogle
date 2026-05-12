@@ -102,5 +102,5 @@ npm run dev
 - `app/providers.tsx` ห่อ `SessionProvider` สำหรับ client-side session
 - รูปโปรไฟล์ Google โหลดจาก `lh3.googleusercontent.com` — ตั้งค่า remote patterns ใน `next.config.ts` แล้ว
 -  Resource 
--[https://cloud.google.com/free?utm_source=google&utm_medium=cpc&utm_campaign=Cloud-SS-DR-GCP-1713664-GCP-DR-APAC-TH-th-Google-BKWS-MIX-GenericCloud&utm_content=c-Hybrid+%7C+BKWS+-+EXA+%7C+Txt+-+Generic+Cloud-Cloud+Generic-Core+GCP-TH_en-6458750523&utm_term=google%20cloud&gclsrc=aw.ds&gad_source=1&gad_campaignid=12372110337&gclid=CjwKCAjwn4vQBhBsEiwAq3hhN66Tt4GODfHRqppGua5Qi2FyVYVykHFiZXHiTeFoc4FEXmhO2rrT5BoCTYwQAvD_BwE](Google Cloud) for Login Google 
-- [https://azure.microsoft.com/en-us](Microsoft Azure For Login Microsoft)
+-(https://cloud.google.com/free?utm_source=google&utm_medium=cpc&utm_campaign=Cloud-SS-DR-GCP-1713664-GCP-DR-APAC-TH-th-Google-BKWS-MIX-GenericCloud&utm_content=c-Hybrid+%7C+BKWS+-+EXA+%7C+Txt+-+Generic+Cloud-Cloud+Generic-Core+GCP-TH_en-6458750523&utm_term=google%20cloud&gclsrc=aw.ds&gad_source=1&gad_campaignid=12372110337&gclid=CjwKCAjwn4vQBhBsEiwAq3hhN66Tt4GODfHRqppGua5Qi2FyVYVykHFiZXHiTeFoc4FEXmhO2rrT5BoCTYwQAvD_BwE)[Google Cloud] for Login Google 
+- (https://azure.microsoft.com/en-us)[Microsoft Azure For Login Microsoft]
