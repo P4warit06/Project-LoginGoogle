@@ -23,7 +23,11 @@ const fadeUp = {
   show: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.09, duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+    transition: {
+      delay: i * 0.09,
+      duration: 0.55,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
   }),
 };
 const scaleIn = {
@@ -32,7 +36,10 @@ const scaleIn = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
   },
   exit: { opacity: 0, scale: 0.96, transition: { duration: 0.2 } },
 };
@@ -905,7 +912,10 @@ export function AuthCard() {
               initial={{ opacity: 0, scale: 0.88, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 12 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              transition={{
+                duration: 0.35,
+                ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+              }}
               style={{
                 position: "fixed",
                 top: "50%",
