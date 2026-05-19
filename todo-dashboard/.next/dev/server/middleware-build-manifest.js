@@ -1,0 +1,50 @@
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": [
+      "static/chunks/0mr0_next_dist_compiled_00qlumc._.js",
+      "static/chunks/0mr0_next_dist_shared_lib_0kn60xr._.js",
+      "static/chunks/0mr0_next_dist_client_0e5z5__._.js",
+      "static/chunks/0mr0_next_dist_05~oiq2._.js",
+      "static/chunks/0mr0_next_app_0_y1y9w.js",
+      "static/chunks/[next]_entry_page-loader_ts_0gdu6oe._.js",
+      "static/chunks/0mr0_react-dom_0c1gskx._.js",
+      "static/chunks/0mr0_12ilnik._.js",
+      "static/chunks/[root-of-the-server]__0s-ph3d._.js",
+      "static/chunks/Desktop_Project-LoginGoogle_todo-dashboard_Frontend_pages__app_07xvfw~._.js",
+      "static/chunks/turbopack-Desktop_Project-LoginGoogle_todo-dashboard_Frontend_pages__app_0gie9xz._.js"
+    ],
+    "/_error": [
+      "static/chunks/0mr0_next_dist_compiled_00qlumc._.js",
+      "static/chunks/0mr0_next_dist_shared_lib_0_zgwim._.js",
+      "static/chunks/0mr0_next_dist_client_0e5z5__._.js",
+      "static/chunks/0mr0_next_dist_0ob5xnd._.js",
+      "static/chunks/[next]_entry_page-loader_ts_04_glgl._.js",
+      "static/chunks/0mr0_react-dom_0c1gskx._.js",
+      "static/chunks/0mr0_12ilnik._.js",
+      "static/chunks/[root-of-the-server]__054mxbm._.js",
+      "static/chunks/Desktop_Project-LoginGoogle_todo-dashboard_Frontend_pages__error_07xvfw~._.js",
+      "static/chunks/0nkw_Project-LoginGoogle_todo-dashboard_Frontend_pages__error_13pxztr._.js"
+    ]
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0mr0_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [
+    "static/development/_buildManifest.js",
+    "static/development/_ssgManifest.js",
+    "static/development/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_00.2vnk._.js",
+    "static/chunks/0mr0_next_dist_compiled_next-devtools_index_0xv6yke.js",
+    "static/chunks/0mr0_next_dist_compiled_react-dom_0.3qakp._.js",
+    "static/chunks/0mr0_next_dist_compiled_react-server-dom-turbopack_0h2ciyt._.js",
+    "static/chunks/0mr0_next_dist_compiled_02442ww._.js",
+    "static/chunks/0mr0_next_dist_client_0d.-wf_._.js",
+    "static/chunks/0mr0_next_dist_0m-st2z._.js",
+    "static/chunks/0mr0_@swc_helpers_cjs_0-85825._.js",
+    "static/chunks/Desktop_Project-LoginGoogle_todo-dashboard_Frontend_0rqeker._.js",
+    "static/chunks/turbopack-Desktop_Project-LoginGoogle_todo-dashboard_Frontend_0k26tf2._.js"
+  ]
+};
