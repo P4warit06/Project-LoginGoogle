@@ -152,12 +152,24 @@ export default function TodoDashboard() {
     setDueDate("");
     setPriority("medium");
 
+    const name = session?.user?.name ?? "Someone";
+    const pri = priority.toUpperCase();
+    const due = dueDate ? ` | Due: ${dueDate}` : "";
+    sendLineMessage(
+      `➕ ${name} เพิ่ม Task ใหม่:\n📌 ${input.trim()}\n🏷️ Priority: ${pri}${due}`,
+      true
+    );
     toast.success("Task added ✨");
   };
 
   const deleteTodo = (id: number) => {
+    const target = todos.find((t) => t.id === id);
     setTodos((p) => p.filter((t) => t.id !== id));
     toast.error("Task deleted");
+    if (target) {
+      const name = session?.user?.name ?? "Someone";
+      sendLineMessage(`🗑️ ${name} ลบ Task:\n"${target.text}"`, true);
+    }
   };
 
   const toggleTodo = (id: number) => {
@@ -217,10 +229,30 @@ export default function TodoDashboard() {
       )
     );
 
+    const target = todos.find((t) => t.id === id);
+    const name = session?.user?.name ?? "Someone";
+    if (target && target.text !== editingText.trim()) {
+      sendLineMessage(
+        `✏️ ${name} แก้ไข Task:\nเดิม: "${
+          target.text
+        }"\nใหม่: "${editingText.trim()}"`,
+        true
+      );
+    }
     toast.success("Task updated ✨");
   };
 
-  const clearDone = () => setTodos((p) => p.filter((t) => !t.completed));
+  const clearDone = () => {
+    const doneCount = todos.filter((t) => t.completed).length;
+    if (doneCount === 0) return;
+    setTodos((p) => p.filter((t) => !t.completed));
+    const name = session?.user?.name ?? "Someone";
+    sendLineMessage(
+      `🧹 ${name} ล้าง Task ที่เสร็จแล้ว ${doneCount} รายการ`,
+      true
+    );
+    toast.success(`Cleared ${doneCount} completed tasks`);
+  };
 
   /* ───────────────── FILTER ───────────────── */
 
@@ -283,20 +315,14 @@ export default function TodoDashboard() {
     <div
       style={{
         width: "100%",
-        minHeight: "100vh",
         fontFamily: "'DM Sans', sans-serif",
         color: "#fff",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
       <div
         style={{
-          flex: 1,
           width: "100%",
-          maxWidth: 1100,
-          margin: "0 auto",
-          padding: "clamp(1rem,4vw,2rem)",
+          padding: "0",
           boxSizing: "border-box",
         }}
       >
@@ -410,7 +436,7 @@ export default function TodoDashboard() {
           transition={{ delay: 0.06, duration: 0.45 }}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 12,
             marginBottom: "1.5rem",
           }}
@@ -437,10 +463,10 @@ export default function TodoDashboard() {
             <div
               key={label}
               style={{
-                padding: "1rem 1.2rem",
+                padding: "clamp(0.6rem,3vw,1rem) clamp(0.6rem,3vw,1.2rem)",
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 18,
+                borderRadius: 14,
               }}
             >
               <p
@@ -458,7 +484,7 @@ export default function TodoDashboard() {
 
               <p
                 style={{
-                  fontSize: "clamp(2rem,6vw,2.6rem)",
+                  fontSize: "clamp(1.5rem,6vw,2.6rem)",
                   fontWeight: 800,
                   color: accent,
                   lineHeight: 1,
@@ -557,9 +583,10 @@ export default function TodoDashboard() {
               border: "1px solid rgba(255,255,255,0.09)",
               borderRadius: 14,
               color: "#fff",
-              fontSize: 14,
+              fontSize: 16, // ป้องกัน iOS zoom
               outline: "none",
-              boxSizing: "border-box",
+              boxSizing: "border-box" as const,
+              WebkitAppearance: "none" as const,
             }}
           />
         </div>
@@ -572,8 +599,7 @@ export default function TodoDashboard() {
           transition={{ delay: 0.13 }}
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
+            flexDirection: "column",
             gap: 10,
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.09)",
@@ -588,13 +614,13 @@ export default function TodoDashboard() {
             onKeyDown={(e) => e.key === "Enter" && addTodo()}
             placeholder="Add a new task…"
             style={{
-              flex: "1 1 220px",
-              minWidth: 0,
+              width: "100%",
               background: "transparent",
               border: "none",
               outline: "none",
               color: "#fff",
-              fontSize: 14,
+              fontSize: 16, // 16px ป้องกัน iOS zoom เมื่อ focus
+              WebkitAppearance: "none",
             }}
           />
 
@@ -642,13 +668,14 @@ export default function TodoDashboard() {
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: 10,
-              padding: "7px 10px",
+              padding: "10px 12px",
               color: "rgba(255,255,255,0.7)",
-              fontSize: 12,
+              fontSize: 16, // 16px ป้องกัน iOS zoom
               outline: "none",
               colorScheme: "dark",
               width: "100%",
-              maxWidth: 180,
+              boxSizing: "border-box" as const,
+              WebkitAppearance: "none",
             }}
           />
 
@@ -658,7 +685,6 @@ export default function TodoDashboard() {
             whileTap={{ scale: 0.95 }}
             style={{
               width: "100%",
-              maxWidth: 160,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -686,9 +712,14 @@ export default function TodoDashboard() {
           transition={{ delay: 0.16 }}
           style={{
             display: "flex",
-            flexWrap: "wrap",
+            flexWrap: "nowrap",
             gap: 8,
             marginBottom: "1.5rem",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            paddingBottom: 4,
           }}
         >
           <Label>Status</Label>
@@ -801,12 +832,14 @@ export default function TodoDashboard() {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        padding: 0,
+                        padding: "4px",
                         color: todo.completed
                           ? "#4ade80"
                           : "rgba(255,255,255,0.28)",
-                        fontSize: 22,
+                        fontSize: 24,
                         flexShrink: 0,
+                        touchAction: "manipulation", // ป้องกัน double-tap zoom
+                        WebkitTapHighlightColor: "transparent",
                       }}
                     >
                       {todo.completed ? (
@@ -1010,6 +1043,9 @@ function Label({ children }: { children: React.ReactNode }) {
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         color: "rgba(255,255,255,0.2)",
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
       }}
     >
       {children}
@@ -1045,12 +1081,16 @@ function Pill({
     <button
       onClick={onClick}
       style={{
-        padding: "6px 12px",
+        padding: "8px 14px",
         borderRadius: 999,
         fontSize: 12,
         fontWeight: 600,
         cursor: "pointer",
         transition: "all 0.15s",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
         border: active
           ? `1px solid ${color ?? "rgba(167,139,250,0.4)"}`
           : "1px solid rgba(255,255,255,0.08)",
@@ -1119,11 +1159,16 @@ function IconBtn({
         border: "none",
         cursor: "pointer",
         color: "rgba(255,255,255,0.2)",
-        fontSize: 17,
+        fontSize: 19,
         display: "flex",
         alignItems: "center",
-        padding: 5,
-        borderRadius: 7,
+        padding: 8,
+        borderRadius: 8,
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent",
+        minWidth: 36,
+        minHeight: 36,
+        justifyContent: "center",
       }}
     >
       {children}

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-// LINE จะ POST มาที่นี่เพื่อ verify และรับ events
-// ไม่ต้องการ session เพราะเป็น server-to-server call จาก LINE
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-line-signature") ?? "";
@@ -39,12 +37,10 @@ export async function POST(req: NextRequest) {
   for (const event of body.events ?? []) {
     const userId = event.source?.userId;
 
-    // ── Log userId — copy จาก Vercel logs แล้วใส่ใน LINE_USER_ID env ──
     if (userId) {
       console.log(`LINE userId: ${userId}`);
     }
 
-    // ── ตอบ reply เพื่อยืนยันการเชื่อมต่อ ──
     if (event.type === "message" && event.replyToken && userId) {
       const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
       if (token) {
@@ -68,11 +64,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── ต้อง return 200 เสมอ ไม่งั้น LINE จะ retry ──
   return NextResponse.json({ ok: true }, { status: 200 });
 }
 
-// LINE Developers กด Verify จะส่ง GET มาด้วย
 export async function GET() {
   return NextResponse.json({ status: "LINE Webhook OK" }, { status: 200 });
 }
