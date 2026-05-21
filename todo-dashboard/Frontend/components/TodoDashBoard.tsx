@@ -311,724 +311,797 @@ export default function TodoDashboard() {
 
   /* ───────────────── RENDER ───────────────── */
 
+  const todoMobileStyles = `
+    @media (max-width: 480px) {
+      .todo-filter-row {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+      }
+      .todo-filter-row::-webkit-scrollbar { display: none; }
+
+      .todo-filter-btn {
+        flex-shrink: 0 !important;
+        min-height: 36px !important;
+        font-size: 12px !important;
+      }
+
+      .todo-input-row {
+        flex-wrap: wrap !important;
+      }
+
+      .todo-input {
+        min-height: 48px !important;
+        font-size: 16px !important; /* 16px ป้องกัน iOS zoom เวลา focus */
+      }
+
+      .todo-add-btn {
+        min-height: 48px !important;
+        min-width: 48px !important;
+      }
+
+      .todo-item {
+        padding: 12px !important;
+        gap: 8px !important;
+      }
+
+      .todo-item-text {
+        font-size: 13px !important;
+      }
+
+      .todo-item-actions {
+        gap: 4px !important;
+      }
+
+      .todo-date-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+      }
+
+      .todo-date-input {
+        font-size: 13px !important;
+        min-height: 40px !important;
+      }
+
+      .todo-priority-btn {
+        min-height: 36px !important;
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+      }
+
+      .todo-stat-card {
+        padding: 10px 8px !important;
+      }
+
+      .todo-stat-value {
+        font-size: 1.5rem !important;
+      }
+    }
+  `;
+
   return (
-    <div
-      style={{
-        width: "100%",
-        fontFamily: "'DM Sans', sans-serif",
-        color: "#fff",
-      }}
-    >
+    <>
+      <style dangerouslySetInnerHTML={{ __html: todoMobileStyles }} />
       <div
         style={{
           width: "100%",
-          padding: "0",
-          boxSizing: "border-box",
+          fontFamily: "'DM Sans', sans-serif",
+          color: "#fff",
         }}
       >
-        {/* HEADING */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.45,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          style={{ marginBottom: "1.5rem" }}
-        >
-          <h1
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(1.8rem, 5vw, 2.8rem)",
-              color: "#fff",
-              letterSpacing: "-0.03em",
-              lineHeight: 1.1,
-              marginBottom: 6,
-            }}
-          >
-            My Tasks
-          </h1>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
-            <p
-              style={{
-                fontSize: "clamp(12px,2vw,14px)",
-                color: "rgba(255,255,255,0.35)",
-                margin: 0,
-              }}
-            >
-              {todos.length === 0
-                ? "Start by adding your first task below ✦"
-                : `${doneCount} of ${todos.length} tasks completed`}
-            </p>
-            {todos.length > 0 && (
-              <motion.button
-                onClick={async () => {
-                  const overdue = todos.filter(
-                    (t) => !t.completed && getDueDays(t.dueDate)?.overdue
-                  );
-                  const dueToday = todos.filter(
-                    (t) =>
-                      !t.completed &&
-                      getDueDays(t.dueDate)?.label === "Due today"
-                  );
-                  const remaining = todos.filter((t) => !t.completed).length;
-                  const done = todos.filter((t) => t.completed).length;
-                  let msg = `📋 Todo Summary\n${
-                    session?.user?.name ?? "User"
-                  }\n`;
-                  msg += `✅ Done: ${done}  |  🔲 Left: ${remaining}\n`;
-                  if (overdue.length > 0) {
-                    msg += `\n⚠️ Overdue (${overdue.length}):\n`;
-                    overdue.forEach((t) => {
-                      msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
-                    });
-                  }
-                  if (dueToday.length > 0) {
-                    msg += `\n🔔 Due Today (${dueToday.length}):\n`;
-                    dueToday.forEach((t) => {
-                      msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
-                    });
-                  }
-                  await sendLineMessage(msg);
-                }}
-                disabled={notifying}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "8px 16px",
-                  borderRadius: 12,
-                  background: "rgba(6,199,85,0.12)",
-                  border: "1px solid rgba(6,199,85,0.3)",
-                  color: "#06c755",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: notifying ? "not-allowed" : "pointer",
-                  opacity: notifying ? 0.6 : 1,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                <SiLine style={{ fontSize: 16 }} />
-                {notifying ? "Sending…" : "Send to LINE"}
-              </motion.button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* STATS */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06, duration: 0.45 }}
+        <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 12,
-            marginBottom: "1.5rem",
+            width: "100%",
+            padding: "0",
+            boxSizing: "border-box",
           }}
         >
-          {(
-            [
-              {
-                label: "Total",
-                value: todos.length,
-                accent: "#a78bfa",
-              },
-              {
-                label: "Completed",
-                value: doneCount,
-                accent: "#4ade80",
-              },
-              {
-                label: "Remaining",
-                value: todos.length - doneCount,
-                accent: "#fb923c",
-              },
-            ] as const
-          ).map(({ label, value, accent }) => (
-            <div
-              key={label}
-              style={{
-                padding: "clamp(0.6rem,3vw,1rem) clamp(0.6rem,3vw,1.2rem)",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 14,
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.3)",
-                  marginBottom: 8,
-                }}
-              >
-                {label}
-              </p>
+          {/* HEADING */}
 
-              <p
-                style={{
-                  fontSize: "clamp(1.5rem,6vw,2.6rem)",
-                  fontWeight: 800,
-                  color: accent,
-                  lineHeight: 1,
-                  margin: 0,
-                }}
-              >
-                {value}
-              </p>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* PROGRESS */}
-
-        {todos.length > 0 && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.45,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             style={{ marginBottom: "1.5rem" }}
           >
-            <div
+            <h1
               style={{
-                height: 5,
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.07)",
-                overflow: "hidden",
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(1.8rem, 5vw, 2.8rem)",
+                color: "#fff",
+                letterSpacing: "-0.03em",
+                lineHeight: 1.1,
+                marginBottom: 6,
               }}
             >
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{
-                  duration: 0.7,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                style={{
-                  height: "100%",
-                  borderRadius: 999,
-                  background: "linear-gradient(90deg,#7c3aed,#a78bfa)",
-                }}
-              />
-            </div>
+              My Tasks
+            </h1>
 
             <div
               style={{
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "space-between",
-                marginTop: 6,
-                fontSize: 11,
-                color: "rgba(255,255,255,0.3)",
-                gap: 12,
                 flexWrap: "wrap",
+                gap: 10,
               }}
             >
-              <span>{progress}% complete</span>
-
-              <span>
-                {
-                  todos.filter(
-                    (t) => !t.completed && getDueDays(t.dueDate)?.overdue
-                  ).length
-                }{" "}
-                overdue
-              </span>
-            </div>
-          </motion.div>
-        )}
-
-        {/* SEARCH */}
-
-        <div
-          style={{
-            position: "relative",
-            marginBottom: "0.85rem",
-          }}
-        >
-          <RiSearchLine
-            style={{
-              position: "absolute",
-              left: 15,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.22)",
-              fontSize: 16,
-            }}
-          />
-
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tasks…"
-            style={{
-              width: "100%",
-              padding: "12px 16px 12px 42px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              borderRadius: 14,
-              color: "#fff",
-              fontSize: 16, // ป้องกัน iOS zoom
-              outline: "none",
-              boxSizing: "border-box" as const,
-              WebkitAppearance: "none" as const,
-            }}
-          />
-        </div>
-
-        {/* ADD TASK */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.13 }}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            borderRadius: 16,
-            padding: "12px",
-            marginBottom: "1.2rem",
-          }}
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addTodo()}
-            placeholder="Add a new task…"
-            style={{
-              width: "100%",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "#fff",
-              fontSize: 16, // 16px ป้องกัน iOS zoom เมื่อ focus
-              WebkitAppearance: "none",
-            }}
-          />
-
-          {/* PRIORITY */}
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <RiFlag2Line
-              style={{
-                color: "rgba(255,255,255,0.25)",
-                fontSize: 13,
-              }}
-            />
-
-            {(["high", "medium", "low"] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPriority(p)}
+              <p
                 style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
-                  cursor: "pointer",
-                  background: PRI[p].bg,
-                  border: `2px solid ${
-                    priority === p ? PRI[p].color : "transparent"
-                  }`,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* DATE */}
-
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 10,
-              padding: "10px 12px",
-              color: "rgba(255,255,255,0.7)",
-              fontSize: 16, // 16px ป้องกัน iOS zoom
-              outline: "none",
-              colorScheme: "dark",
-              width: "100%",
-              boxSizing: "border-box" as const,
-              WebkitAppearance: "none",
-            }}
-          />
-
-          <motion.button
-            onClick={addTodo}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 6,
-              padding: "10px 18px",
-              borderRadius: 11,
-              background: "linear-gradient(135deg,#7c3aed,#a78bfa)",
-              border: "none",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <RiAddLine style={{ fontSize: 15 }} />
-            Add Task
-          </motion.button>
-        </motion.div>
-
-        {/* FILTERS */}
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.16 }}
-          style={{
-            display: "flex",
-            flexWrap: "nowrap",
-            gap: 8,
-            marginBottom: "1.5rem",
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            paddingBottom: 4,
-          }}
-        >
-          <Label>Status</Label>
-
-          {(["all", "active", "completed"] as FilterType[]).map((f) => (
-            <Pill
-              key={f}
-              active={filter === f}
-              onClick={() => setFilter(f)}
-              label={f.charAt(0).toUpperCase() + f.slice(1)}
-            />
-          ))}
-
-          <Divider />
-
-          <Label>Priority</Label>
-
-          {(["all", "high", "medium", "low"] as PriorityFilter[]).map((p) => (
-            <Pill
-              key={p}
-              active={priFilter === p}
-              onClick={() => setPriFilter(p)}
-              label={
-                p === "all" ? "All" : p.charAt(0).toUpperCase() + p.slice(1)
-              }
-              color={p !== "all" ? PRI[p].color : undefined}
-            />
-          ))}
-        </motion.div>
-
-        {/* TODO LIST */}
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <AnimatePresence mode="popLayout">
-            {filtered.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{
-                  textAlign: "center",
-                  padding: "4rem 1rem",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px dashed rgba(255,255,255,0.07)",
-                  borderRadius: 20,
-                  color: "rgba(255,255,255,0.22)",
-                  fontSize: 14,
+                  fontSize: "clamp(12px,2vw,14px)",
+                  color: "rgba(255,255,255,0.35)",
+                  margin: 0,
                 }}
               >
-                <div
+                {todos.length === 0
+                  ? "Start by adding your first task below ✦"
+                  : `${doneCount} of ${todos.length} tasks completed`}
+              </p>
+              {todos.length > 0 && (
+                <motion.button
+                  onClick={async () => {
+                    const overdue = todos.filter(
+                      (t) => !t.completed && getDueDays(t.dueDate)?.overdue
+                    );
+                    const dueToday = todos.filter(
+                      (t) =>
+                        !t.completed &&
+                        getDueDays(t.dueDate)?.label === "Due today"
+                    );
+                    const remaining = todos.filter((t) => !t.completed).length;
+                    const done = todos.filter((t) => t.completed).length;
+                    let msg = `📋 Todo Summary\n${
+                      session?.user?.name ?? "User"
+                    }\n`;
+                    msg += `✅ Done: ${done}  |  🔲 Left: ${remaining}\n`;
+                    if (overdue.length > 0) {
+                      msg += `\n⚠️ Overdue (${overdue.length}):\n`;
+                      overdue.forEach((t) => {
+                        msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
+                      });
+                    }
+                    if (dueToday.length > 0) {
+                      msg += `\n🔔 Due Today (${dueToday.length}):\n`;
+                      dueToday.forEach((t) => {
+                        msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
+                      });
+                    }
+                    await sendLineMessage(msg);
+                  }}
+                  disabled={notifying}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
-                    fontSize: 24,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    padding: "8px 16px",
+                    borderRadius: 12,
+                    background: "rgba(6,199,85,0.12)",
+                    border: "1px solid rgba(6,199,85,0.3)",
+                    color: "#06c755",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: notifying ? "not-allowed" : "pointer",
+                    opacity: notifying ? 0.6 : 1,
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  <SiLine style={{ fontSize: 16 }} />
+                  {notifying ? "Sending…" : "Send to LINE"}
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
+
+          {/* STATS */}
+
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06, duration: 0.45 }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "clamp(6px, 2vw, 12px)",
+              marginBottom: "1.25rem",
+            }}
+          >
+            {(
+              [
+                {
+                  label: "Total",
+                  value: todos.length,
+                  accent: "#a78bfa",
+                },
+                {
+                  label: "Completed",
+                  value: doneCount,
+                  accent: "#4ade80",
+                },
+                {
+                  label: "Remaining",
+                  value: todos.length - doneCount,
+                  accent: "#fb923c",
+                },
+              ] as const
+            ).map(({ label, value, accent }) => (
+              <div
+                key={label}
+                style={{
+                  padding: "clamp(0.6rem,3vw,1rem) clamp(0.6rem,3vw,1.2rem)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 14,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.3)",
                     marginBottom: 8,
                   }}
                 >
-                  ✦
-                </div>
+                  {label}
+                </p>
 
-                {search
-                  ? `No results for "${search}"`
-                  : "No tasks here — add one above"}
-              </motion.div>
-            ) : (
-              filtered.map((todo, i) => {
-                const due = getDueDays(todo.dueDate);
-                const pri = PRI[todo.priority];
+                <p
+                  style={{
+                    fontSize: "clamp(1.5rem,6vw,2.6rem)",
+                    fontWeight: 800,
+                    color: accent,
+                    lineHeight: 1,
+                    margin: 0,
+                  }}
+                >
+                  {value}
+                </p>
+              </div>
+            ))}
+          </motion.div>
 
-                return (
-                  <motion.div
-                    key={todo.id}
-                    layout
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        delay: i * 0.035,
-                      },
-                    }}
-                    exit={{
-                      opacity: 0,
-                      x: 16,
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      padding: "14px",
-                      background: due?.overdue
-                        ? "rgba(248,113,113,0.06)"
-                        : "rgba(255,255,255,0.04)",
-                      border: due?.overdue
-                        ? "1px solid rgba(248,113,113,0.22)"
-                        : "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 16,
-                    }}
-                  >
-                    {/* CHECKBOX */}
+          {/* PROGRESS */}
 
-                    <button
-                      onClick={() => toggleTodo(todo.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: "4px",
-                        color: todo.completed
-                          ? "#4ade80"
-                          : "rgba(255,255,255,0.28)",
-                        fontSize: 24,
-                        flexShrink: 0,
-                        touchAction: "manipulation", // ป้องกัน double-tap zoom
-                        WebkitTapHighlightColor: "transparent",
-                      }}
-                    >
-                      {todo.completed ? (
-                        <RiCheckboxCircleFill />
-                      ) : (
-                        <RiRadioButtonLine />
-                      )}
-                    </button>
+          {todos.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ marginBottom: "1.5rem" }}
+            >
+              <div
+                style={{
+                  height: 5,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.07)",
+                  overflow: "hidden",
+                }}
+              >
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{
+                    duration: 0.7,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  style={{
+                    height: "100%",
+                    borderRadius: 999,
+                    background: "linear-gradient(90deg,#7c3aed,#a78bfa)",
+                  }}
+                />
+              </div>
 
-                    {/* BODY */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: 6,
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.3)",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>{progress}% complete</span>
 
-                    <div
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
-                      {todo.isEditing ? (
-                        <input
-                          ref={editRef}
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                          style={{
-                            width: "100%",
-                            background: "rgba(255,255,255,0.07)",
-                            border: "1px solid rgba(167,139,250,0.45)",
-                            borderRadius: 10,
-                            padding: "8px 12px",
-                            color: "#fff",
-                            fontSize: 14,
-                            outline: "none",
-                            boxSizing: "border-box",
-                          }}
-                        />
-                      ) : (
-                        <>
-                          <p
-                            style={{
-                              fontSize: 14,
-                              lineHeight: 1.55,
-                              marginBottom: 7,
-                              wordBreak: "break-word",
-                              color: todo.completed
-                                ? "rgba(255,255,255,0.28)"
-                                : "rgba(255,255,255,0.88)",
-                              textDecoration: todo.completed
-                                ? "line-through"
-                                : "none",
-                            }}
-                          >
-                            {todo.text}
-                          </p>
+                <span>
+                  {
+                    todos.filter(
+                      (t) => !t.completed && getDueDays(t.dueDate)?.overdue
+                    ).length
+                  }{" "}
+                  overdue
+                </span>
+              </div>
+            </motion.div>
+          )}
 
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 6,
-                              alignItems: "center",
-                            }}
-                          >
-                            <Badge
-                              bg={pri.bg}
-                              border={pri.border}
-                              color={pri.color}
-                            >
-                              {todo.priority}
-                            </Badge>
+          {/* SEARCH */}
 
-                            {due && (
-                              <Badge
-                                bg={
-                                  due.overdue
-                                    ? "rgba(248,113,113,0.14)"
-                                    : "rgba(255,255,255,0.06)"
-                                }
-                                border={
-                                  due.overdue
-                                    ? "rgba(248,113,113,0.3)"
-                                    : "rgba(255,255,255,0.1)"
-                                }
-                                color={
-                                  due.overdue
-                                    ? "#f87171"
-                                    : "rgba(255,255,255,0.45)"
-                                }
-                              >
-                                {due.label}
-                              </Badge>
-                            )}
-
-                            <span
-                              style={{
-                                fontSize: 10,
-                                color: "rgba(255,255,255,0.18)",
-                              }}
-                            >
-                              {new Date(todo.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* ACTIONS */}
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 2,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {todo.isEditing ? (
-                        <>
-                          <IconBtn
-                            onClick={() => saveEdit(todo.id)}
-                            hoverColor="#60a5fa"
-                          >
-                            <RiSaveLine />
-                          </IconBtn>
-
-                          <IconBtn
-                            onClick={() => cancelEdit(todo.id)}
-                            hoverColor="#fbbf24"
-                          >
-                            <RiCloseLine />
-                          </IconBtn>
-                        </>
-                      ) : (
-                        <IconBtn
-                          onClick={() => startEdit(todo)}
-                          hoverColor="#fff"
-                        >
-                          <RiEdit2Line />
-                        </IconBtn>
-                      )}
-
-                      <IconBtn
-                        onClick={() => deleteTodo(todo.id)}
-                        hoverColor="#f87171"
-                      >
-                        <RiDeleteBinLine />
-                      </IconBtn>
-                    </div>
-                  </motion.div>
-                );
-              })
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* FOOTER */}
-
-        {doneCount > 0 && (
           <div
             style={{
-              marginTop: "1.4rem",
-              display: "flex",
-              justifyContent: "flex-end",
+              position: "relative",
+              marginBottom: "0.85rem",
             }}
           >
-            <button
-              onClick={clearDone}
+            <RiSearchLine
+              style={{
+                position: "absolute",
+                left: 15,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "rgba(255,255,255,0.22)",
+                fontSize: 16,
+              }}
+            />
+
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tasks…"
               style={{
                 width: "100%",
-                maxWidth: 220,
-                background: "rgba(248,113,113,0.08)",
-                border: "1px solid rgba(248,113,113,0.2)",
-                color: "rgba(248,113,113,0.75)",
-                padding: "10px 16px",
-                borderRadius: 11,
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 600,
+                padding: "12px 16px 12px 42px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: 14,
+                color: "#fff",
+                fontSize: 16, // ป้องกัน iOS zoom
+                outline: "none",
+                boxSizing: "border-box" as const,
+                WebkitAppearance: "none" as const,
+              }}
+            />
+          </div>
+
+          {/* ADD TASK */}
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.13 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.09)",
+              borderRadius: 16,
+              padding: "12px",
+              marginBottom: "1.2rem",
+            }}
+          >
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addTodo()}
+              placeholder="Add a new task…"
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#fff",
+                fontSize: 16, // 16px ป้องกัน iOS zoom เมื่อ focus
+                WebkitAppearance: "none",
+              }}
+            />
+
+            {/* PRIORITY */}
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
               }}
             >
-              Clear completed ({doneCount})
-            </button>
+              <RiFlag2Line
+                style={{
+                  color: "rgba(255,255,255,0.25)",
+                  fontSize: 13,
+                }}
+              />
+
+              {(["high", "medium", "low"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    background: PRI[p].bg,
+                    border: `2px solid ${
+                      priority === p ? PRI[p].color : "transparent"
+                    }`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* DATE */}
+
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 10,
+                padding: "10px 12px",
+                color: "rgba(255,255,255,0.7)",
+                fontSize: 16, // 16px ป้องกัน iOS zoom
+                outline: "none",
+                colorScheme: "dark",
+                width: "100%",
+                boxSizing: "border-box" as const,
+                WebkitAppearance: "none",
+              }}
+            />
+
+            <motion.button
+              onClick={addTodo}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                padding: "10px 18px",
+                borderRadius: 11,
+                background: "linear-gradient(135deg,#7c3aed,#a78bfa)",
+                border: "none",
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <RiAddLine style={{ fontSize: 15 }} />
+              Add Task
+            </motion.button>
+          </motion.div>
+
+          {/* FILTERS */}
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.16 }}
+            style={{
+              display: "flex",
+              flexWrap: "nowrap",
+              gap: 8,
+              marginBottom: "1.5rem",
+              overflowX: "auto",
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              paddingBottom: 4,
+            }}
+          >
+            <Label>Status</Label>
+
+            {(["all", "active", "completed"] as FilterType[]).map((f) => (
+              <Pill
+                key={f}
+                active={filter === f}
+                onClick={() => setFilter(f)}
+                label={f.charAt(0).toUpperCase() + f.slice(1)}
+              />
+            ))}
+
+            <Divider />
+
+            <Label>Priority</Label>
+
+            {(["all", "high", "medium", "low"] as PriorityFilter[]).map((p) => (
+              <Pill
+                key={p}
+                active={priFilter === p}
+                onClick={() => setPriFilter(p)}
+                label={
+                  p === "all" ? "All" : p.charAt(0).toUpperCase() + p.slice(1)
+                }
+                color={p !== "all" ? PRI[p].color : undefined}
+              />
+            ))}
+          </motion.div>
+
+          {/* TODO LIST */}
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    textAlign: "center",
+                    padding: "4rem 1rem",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px dashed rgba(255,255,255,0.07)",
+                    borderRadius: 20,
+                    color: "rgba(255,255,255,0.22)",
+                    fontSize: 14,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 24,
+                      marginBottom: 8,
+                    }}
+                  >
+                    ✦
+                  </div>
+
+                  {search
+                    ? `No results for "${search}"`
+                    : "No tasks here — add one above"}
+                </motion.div>
+              ) : (
+                filtered.map((todo, i) => {
+                  const due = getDueDays(todo.dueDate);
+                  const pri = PRI[todo.priority];
+
+                  return (
+                    <motion.div
+                      key={todo.id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          delay: i * 0.035,
+                        },
+                      }}
+                      exit={{
+                        opacity: 0,
+                        x: 16,
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        padding: "14px",
+                        background: due?.overdue
+                          ? "rgba(248,113,113,0.06)"
+                          : "rgba(255,255,255,0.04)",
+                        border: due?.overdue
+                          ? "1px solid rgba(248,113,113,0.22)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 16,
+                      }}
+                    >
+                      {/* CHECKBOX */}
+
+                      <button
+                        onClick={() => toggleTodo(todo.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "4px",
+                          color: todo.completed
+                            ? "#4ade80"
+                            : "rgba(255,255,255,0.28)",
+                          fontSize: 24,
+                          flexShrink: 0,
+                          touchAction: "manipulation", // ป้องกัน double-tap zoom
+                          WebkitTapHighlightColor: "transparent",
+                        }}
+                      >
+                        {todo.completed ? (
+                          <RiCheckboxCircleFill />
+                        ) : (
+                          <RiRadioButtonLine />
+                        )}
+                      </button>
+
+                      {/* BODY */}
+
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        {todo.isEditing ? (
+                          <input
+                            ref={editRef}
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            style={{
+                              width: "100%",
+                              background: "rgba(255,255,255,0.07)",
+                              border: "1px solid rgba(167,139,250,0.45)",
+                              borderRadius: 10,
+                              padding: "8px 12px",
+                              color: "#fff",
+                              fontSize: 14,
+                              outline: "none",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        ) : (
+                          <>
+                            <p
+                              style={{
+                                fontSize: 14,
+                                lineHeight: 1.55,
+                                marginBottom: 7,
+                                wordBreak: "break-word",
+                                color: todo.completed
+                                  ? "rgba(255,255,255,0.28)"
+                                  : "rgba(255,255,255,0.88)",
+                                textDecoration: todo.completed
+                                  ? "line-through"
+                                  : "none",
+                              }}
+                            >
+                              {todo.text}
+                            </p>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 6,
+                                alignItems: "center",
+                              }}
+                            >
+                              <Badge
+                                bg={pri.bg}
+                                border={pri.border}
+                                color={pri.color}
+                              >
+                                {todo.priority}
+                              </Badge>
+
+                              {due && (
+                                <Badge
+                                  bg={
+                                    due.overdue
+                                      ? "rgba(248,113,113,0.14)"
+                                      : "rgba(255,255,255,0.06)"
+                                  }
+                                  border={
+                                    due.overdue
+                                      ? "rgba(248,113,113,0.3)"
+                                      : "rgba(255,255,255,0.1)"
+                                  }
+                                  color={
+                                    due.overdue
+                                      ? "#f87171"
+                                      : "rgba(255,255,255,0.45)"
+                                  }
+                                >
+                                  {due.label}
+                                </Badge>
+                              )}
+
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  color: "rgba(255,255,255,0.18)",
+                                }}
+                              >
+                                {new Date(todo.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* ACTIONS */}
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 2,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {todo.isEditing ? (
+                          <>
+                            <IconBtn
+                              onClick={() => saveEdit(todo.id)}
+                              hoverColor="#60a5fa"
+                            >
+                              <RiSaveLine />
+                            </IconBtn>
+
+                            <IconBtn
+                              onClick={() => cancelEdit(todo.id)}
+                              hoverColor="#fbbf24"
+                            >
+                              <RiCloseLine />
+                            </IconBtn>
+                          </>
+                        ) : (
+                          <IconBtn
+                            onClick={() => startEdit(todo)}
+                            hoverColor="#fff"
+                          >
+                            <RiEdit2Line />
+                          </IconBtn>
+                        )}
+
+                        <IconBtn
+                          onClick={() => deleteTodo(todo.id)}
+                          hoverColor="#f87171"
+                        >
+                          <RiDeleteBinLine />
+                        </IconBtn>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </AnimatePresence>
           </div>
-        )}
+
+          {/* FOOTER */}
+
+          {doneCount > 0 && (
+            <div
+              style={{
+                marginTop: "1.4rem",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={clearDone}
+                style={{
+                  width: "100%",
+                  maxWidth: 220,
+                  background: "rgba(248,113,113,0.08)",
+                  border: "1px solid rgba(248,113,113,0.2)",
+                  color: "rgba(248,113,113,0.75)",
+                  padding: "10px 16px",
+                  borderRadius: 11,
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                Clear completed ({doneCount})
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

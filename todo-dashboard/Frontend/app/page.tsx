@@ -11,11 +11,11 @@ export default function Page() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        overflow: "auto", // Changed from hidden to auto for better scrolling
+        overflow: "auto",
         padding: "2rem",
       }}
     >
-      {/* Orb top-left - slightly larger */}
+      {/* Orb top-left */}
       <div
         style={{
           position: "absolute",
@@ -30,7 +30,7 @@ export default function Page() {
           filter: "blur(100px)",
         }}
       />
-      {/* Orb bottom-right - slightly larger */}
+      {/* Orb bottom-right */}
       <div
         style={{
           position: "absolute",
@@ -61,27 +61,24 @@ export default function Page() {
           filter: "blur(50px)",
         }}
       />
-
-      {/* Grid with larger spacing */}
+      {/* Grid */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)," +
-            "linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
-          backgroundSize: "96px 96px", // Larger grid cells
+            "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+          backgroundSize: "96px 96px",
         }}
       />
 
-      {/* Removed maxWidth constraint - now takes full width */}
       <div
         style={{
           position: "relative",
           zIndex: 1,
           width: "100%",
-          maxWidth: "1200px", // Much wider container
+          maxWidth: "1200px",
           margin: "0 auto",
         }}
       >

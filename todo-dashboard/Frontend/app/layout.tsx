@@ -23,24 +23,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-
         <link
           href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
-
-        {/* Mobile responsive */}
         <meta name="theme-color" content="#070708" />
       </head>
-
       <body
         className="min-h-screen overflow-x-hidden bg-[#070708] text-white antialiased"
         style={
@@ -48,8 +42,6 @@ export default function RootLayout({
             fontFamily: "'DM Sans', sans-serif",
             WebkitFontSmoothing: "antialiased",
             MozOsxFontSmoothing: "grayscale",
-
-            // Safe area support (iPhone notch)
             paddingTop: "env(safe-area-inset-top)",
             paddingBottom: "env(safe-area-inset-bottom)",
             paddingLeft: "env(safe-area-inset-left)",
@@ -57,18 +49,12 @@ export default function RootLayout({
           } as React.CSSProperties
         }
       >
-        {/* Main wrapper */}
         <div className="relative flex min-h-screen w-full flex-col">
           <Providers>{children}</Providers>
         </div>
-
-        {/* Toast */}
         <Toaster
           position="top-right"
-          containerStyle={{
-            top: 20,
-            right: 20,
-          }}
+          containerStyle={{ top: 20, right: 20 }}
           toastOptions={{
             duration: 3000,
             style: {

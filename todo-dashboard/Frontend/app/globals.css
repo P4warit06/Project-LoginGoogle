@@ -49,3 +49,58 @@ textarea,
 select {
   font: inherit;
 }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+ 
+/* ── Remove tap highlight flash on mobile ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+ 
+/* ── date picker icon สีขาวบน iOS ── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.5;
+  cursor: pointer;
+}
+ 
+/* ── Scrollable filter tabs — ซ่อน scrollbar ── */
+.filter-scroll::-webkit-scrollbar { display: none; }
+.filter-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+ 
+/* ============================================
+   @media (max-width: 480px) = มือถือเท่านั้น
+   ============================================ */
+@media (max-width: 480px) {
+ 
+  /* Page — เปิด scroll ได้, padding น้อยลง */
+  main {
+    align-items: flex-start !important;
+    padding: 1rem !important;
+    padding-top: max(1rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+ 
+  /* Card — radius และ padding เล็กลง */
+  /* AuthCard outer card */
+  main > div > div {
+    max-width: 100% !important;
+  }
+ 
+  /* ── Touch target minimum 44px ── */
+  button { min-height: 44px; }
+  input  { min-height: 44px; }
+ 
+  /* ── Toast — กลางจอแทนมุมขวา ── */
+  .go2072408551 {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    max-width: 90vw !important;
+  }
+}
+ 

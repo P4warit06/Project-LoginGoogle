@@ -38,7 +38,7 @@ const scaleIn = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] as const,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
     },
   },
   exit: { opacity: 0, scale: 0.96, transition: { duration: 0.2 } },
@@ -113,6 +113,49 @@ export function AuthCard() {
     await signOut({ callbackUrl: "/" });
   };
 
+  /* ── Mobile CSS injected into <head> via JSX ── */
+  const mobileStyles = `
+    @media (max-width: 480px) {
+      .auth-card-wrap { max-width: 100% !important; }
+
+      .auth-card {
+        border-radius: 20px !important;
+        padding: 1.35rem !important;
+      }
+
+      .auth-card-inner {
+        border-radius: 20px !important;
+        padding: 1.35rem !important;
+      }
+
+      .auth-modal {
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 24px 24px 0 0 !important;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
+      }
+
+      .auth-profile-img {
+        width: 72px !important;
+        height: 72px !important;
+      }
+
+      .auth-hero-title {
+        font-size: 2rem !important;
+      }
+
+      .auth-btn {
+        min-height: 48px !important;
+        font-size: 14px !important;
+      }
+    }
+  `;
+
   if (status === "loading") {
     return (
       <div
@@ -141,6 +184,7 @@ export function AuthCard() {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
       <AnimatePresence mode="wait">
         {/* ══════════ LOGGED IN ══════════ */}
         {session ? (
@@ -152,7 +196,7 @@ export function AuthCard() {
             exit="exit"
             style={{ width: "100%" }}
           >
-            <div style={cardStyle}>
+            <div style={cardStyle} className="auth-card">
               <motion.div
                 custom={0}
                 variants={fadeUp}
@@ -206,6 +250,7 @@ export function AuthCard() {
                     <Image
                       src={session.user.image}
                       alt={session.user.name ?? "User"}
+                      className="auth-profile-img"
                       width={92}
                       height={92}
                       style={{
@@ -382,6 +427,7 @@ export function AuthCard() {
                 <HiSparkles style={{ fontSize: 26, color: "#c4b5fd" }} />
               </div>
               <h1
+                className="auth-hero-title"
                 style={{
                   fontFamily: "'Syne', sans-serif",
                   fontSize: "clamp(2rem, 5vw, 2.6rem)",
@@ -713,7 +759,10 @@ export function AuthCard() {
             </motion.div>
 
             {/* ── Login card ── */}
-            <div style={{ ...cardStyle, padding: "2rem 2.5rem" }}>
+            <div
+              style={{ ...cardStyle, padding: "2rem 2.5rem" }}
+              className="auth-card-inner"
+            >
               <motion.div
                 custom={2}
                 variants={fadeUp}
@@ -916,6 +965,7 @@ export function AuthCard() {
                 duration: 0.35,
                 ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
               }}
+              className="auth-modal"
               style={{
                 position: "fixed",
                 top: "50%",
