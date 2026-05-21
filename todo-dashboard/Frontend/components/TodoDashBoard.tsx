@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ import {
   RiCalendarLine,
   RiFlag2Line,
 } from "react-icons/ri";
+import { SiLine } from "react-icons/si";
 
 interface Todo {
   id: number;
@@ -81,6 +82,53 @@ export default function TodoDashboard() {
   const [dueDate, setDueDate] = useState("");
 
   const editRef = useRef<HTMLInputElement>(null);
+  const [notifying, setNotifying] = useState(false);
+  const notifiedRef = useRef<Set<number>>(new Set());
+
+  /* ── LINE Messaging API helper ── */
+  const sendLineMessage = useCallback(
+    async (message: string, silent = false) => {
+      setNotifying(true);
+      try {
+        const res = await fetch("/api/notify-line", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        });
+        if (res.ok && !silent) toast.success("📩 ส่ง LINE แล้ว!");
+        if (!res.ok && !silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
+        return res.ok;
+      } catch {
+        if (!silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
+        return false;
+      } finally {
+        setNotifying(false);
+      }
+    },
+    []
+  );
+
+  /* ── Auto-notify overdue todos ── */
+  useEffect(() => {
+    const checkOverdue = () => {
+      const overdue = todos.filter(
+        (t) =>
+          !t.completed &&
+          getDueDays(t.dueDate)?.overdue &&
+          !notifiedRef.current.has(t.id)
+      );
+      if (overdue.length === 0) return;
+      const lines = overdue
+        .map((t) => `  • [${t.priority.toUpperCase()}] ${t.text}`)
+        .join("\n");
+      const msg = `⚠️ Todo เกินกำหนด ${overdue.length} รายการ:\n${lines}`;
+      sendLineMessage(msg, true);
+      overdue.forEach((t) => notifiedRef.current.add(t.id));
+    };
+    checkOverdue();
+    const id = setInterval(checkOverdue, 60_000);
+    return () => clearInterval(id);
+  }, [todos, sendLineMessage]);
 
   /* ───────────────── CRUD ───────────────── */
 
@@ -130,6 +178,8 @@ export default function TodoDashboard() {
       toast("Task marked active 🔄");
     } else {
       toast.success("Task completed 🎉");
+      const name = session?.user?.name ?? "Someone";
+      sendLineMessage(`✅ ${name} เสร็จงาน:\n${target?.text ?? ""}`, true);
     }
   };
 
@@ -275,16 +325,81 @@ export default function TodoDashboard() {
             My Tasks
           </h1>
 
-          <p
+          <div
             style={{
-              fontSize: "clamp(12px,2vw,14px)",
-              color: "rgba(255,255,255,0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 10,
             }}
           >
-            {todos.length === 0
-              ? "Start by adding your first task below ✦"
-              : `${doneCount} of ${todos.length} tasks completed`}
-          </p>
+            <p
+              style={{
+                fontSize: "clamp(12px,2vw,14px)",
+                color: "rgba(255,255,255,0.35)",
+                margin: 0,
+              }}
+            >
+              {todos.length === 0
+                ? "Start by adding your first task below ✦"
+                : `${doneCount} of ${todos.length} tasks completed`}
+            </p>
+            {todos.length > 0 && (
+              <motion.button
+                onClick={async () => {
+                  const overdue = todos.filter(
+                    (t) => !t.completed && getDueDays(t.dueDate)?.overdue
+                  );
+                  const dueToday = todos.filter(
+                    (t) =>
+                      !t.completed &&
+                      getDueDays(t.dueDate)?.label === "Due today"
+                  );
+                  const remaining = todos.filter((t) => !t.completed).length;
+                  const done = todos.filter((t) => t.completed).length;
+                  let msg = `📋 Todo Summary\n${
+                    session?.user?.name ?? "User"
+                  }\n`;
+                  msg += `✅ Done: ${done}  |  🔲 Left: ${remaining}\n`;
+                  if (overdue.length > 0) {
+                    msg += `\n⚠️ Overdue (${overdue.length}):\n`;
+                    overdue.forEach((t) => {
+                      msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
+                    });
+                  }
+                  if (dueToday.length > 0) {
+                    msg += `\n🔔 Due Today (${dueToday.length}):\n`;
+                    dueToday.forEach((t) => {
+                      msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
+                    });
+                  }
+                  await sendLineMessage(msg);
+                }}
+                disabled={notifying}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "8px 16px",
+                  borderRadius: 12,
+                  background: "rgba(6,199,85,0.12)",
+                  border: "1px solid rgba(6,199,85,0.3)",
+                  color: "#06c755",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: notifying ? "not-allowed" : "pointer",
+                  opacity: notifying ? 0.6 : 1,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <SiLine style={{ fontSize: 16 }} />
+                {notifying ? "Sending…" : "Send to LINE"}
+              </motion.button>
+            )}
+          </div>
         </motion.div>
 
         {/* STATS */}
