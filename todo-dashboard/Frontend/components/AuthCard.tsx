@@ -106,6 +106,38 @@ export function AuthCard() {
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
+
+    // ── ตรวจว่ากำลังรันใน LINE WebView ไหม ──
+    const isLineWebView =
+      typeof window !== "undefined" && /Line\//.test(navigator.userAgent);
+
+    if (isLineWebView) {
+      // Google/Microsoft บล็อก OAuth ใน LINE embedded browser
+      // ต้องเปิด external browser แทน
+      const callbackUrl = encodeURIComponent(window.location.href);
+      const signInUrl = `/api/auth/signin/${provider}?callbackUrl=${callbackUrl}`;
+
+      // ถ้ามี LIFF SDK โหลดอยู่ — ใช้ openWindow เพื่อเปิด external browser
+      const liff = (
+        window as unknown as {
+          liff?: {
+            openWindow: (opt: { url: string; external: boolean }) => void;
+          };
+        }
+      ).liff;
+      if (liff?.openWindow) {
+        liff.openWindow({
+          url: window.location.origin + signInUrl,
+          external: true,
+        });
+      } else {
+        // Fallback: redirect ตรงๆ (บางครั้ง LINE อนุญาต)
+        window.location.href = signInUrl;
+      }
+      setSigningIn(false);
+      return;
+    }
+
     await signIn(provider);
   };
   const handleSignOut = async () => {
@@ -113,22 +145,15 @@ export function AuthCard() {
     await signOut({ callbackUrl: "/" });
   };
 
-  /* ── Mobile CSS injected into <head> via JSX ── */
   const mobileStyles = `
     @media (max-width: 480px) {
-      .auth-card-wrap { max-width: 100% !important; }
-
-      .auth-card {
+      .auth-card-desktop {
         border-radius: 20px !important;
         padding: 1.35rem !important;
       }
-
-      .auth-card-inner {
-        border-radius: 20px !important;
-        padding: 1.35rem !important;
-      }
-
-      .auth-modal {
+      .auth-hero-h1 { font-size: 1.9rem !important; }
+      .auth-btn     { min-height: 48px !important; font-size: 15px !important; }
+      .auth-modal-sheet {
         top: auto !important;
         bottom: 0 !important;
         left: 0 !important;
@@ -138,20 +163,6 @@ export function AuthCard() {
         max-width: 100% !important;
         border-radius: 24px 24px 0 0 !important;
         padding-bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
-      }
-
-      .auth-profile-img {
-        width: 72px !important;
-        height: 72px !important;
-      }
-
-      .auth-hero-title {
-        font-size: 2rem !important;
-      }
-
-      .auth-btn {
-        min-height: 48px !important;
-        font-size: 14px !important;
       }
     }
   `;
@@ -196,7 +207,7 @@ export function AuthCard() {
             exit="exit"
             style={{ width: "100%" }}
           >
-            <div style={cardStyle} className="auth-card">
+            <div style={cardStyle}>
               <motion.div
                 custom={0}
                 variants={fadeUp}
@@ -250,7 +261,6 @@ export function AuthCard() {
                     <Image
                       src={session.user.image}
                       alt={session.user.name ?? "User"}
-                      className="auth-profile-img"
                       width={92}
                       height={92}
                       style={{
@@ -427,7 +437,6 @@ export function AuthCard() {
                 <HiSparkles style={{ fontSize: 26, color: "#c4b5fd" }} />
               </div>
               <h1
-                className="auth-hero-title"
                 style={{
                   fontFamily: "'Syne', sans-serif",
                   fontSize: "clamp(2rem, 5vw, 2.6rem)",
@@ -759,10 +768,7 @@ export function AuthCard() {
             </motion.div>
 
             {/* ── Login card ── */}
-            <div
-              style={{ ...cardStyle, padding: "2rem 2.5rem" }}
-              className="auth-card-inner"
-            >
+            <div style={{ ...cardStyle, padding: "2rem 2.5rem" }}>
               <motion.div
                 custom={2}
                 variants={fadeUp}
@@ -965,7 +971,7 @@ export function AuthCard() {
                 duration: 0.35,
                 ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
               }}
-              className="auth-modal"
+              className="auth-modal-sheet"
               style={{
                 position: "fixed",
                 top: "50%",
