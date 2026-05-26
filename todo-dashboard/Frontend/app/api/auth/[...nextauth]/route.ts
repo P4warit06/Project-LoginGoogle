@@ -15,42 +15,37 @@ export const authOptions: NextAuthOptions = {
       tenantId: process.env.MICROSOFT_TENANT_ID!,
     }),
 
-    // ── LINE Login Provider (Fixed) ──
+    // ── LINE Login Provider ──
     {
       id: "line",
       name: "LINE",
       type: "oauth",
+
+      // LINE รองรับ OpenID Connect — ใช้ wellKnown เพื่อ auto-discover endpoints
       wellKnown: "https://access.line.me/.well-known/openid-configuration",
+
+      // *** จุดสำคัญ: ต้องเปิด idToken เพื่อให้ NextAuth อ่าน profile จาก id_token ***
+      idToken: true,
+
+      // checks: ["pkce", "state"] — LINE รองรับทั้งคู่
+      checks: ["pkce", "state"],
+
       authorization: {
         params: {
           scope: "profile openid email",
         },
       },
+
       clientId: process.env.LINE_LOGIN_CLIENT_ID!,
       clientSecret: process.env.LINE_LOGIN_CLIENT_SECRET!,
-      checks: ["state"],
 
-      // This is the correct profile mapping function
-      profile(profile, tokens) {
-        // Parse email from id_token if available
-        let email = null;
-        if (tokens?.id_token) {
-          try {
-            const base64Payload = tokens.id_token.split(".")[1];
-            const payload = JSON.parse(
-              Buffer.from(base64Payload, "base64").toString()
-            );
-            email = payload.email || null;
-          } catch (e) {
-            console.error("Failed to parse id_token:", e);
-          }
-        }
-
+      // profile จาก id_token (OpenID Connect standard claims)
+      profile(profile) {
         return {
-          id: profile.sub, // OpenID Connect uses 'sub' as user ID
+          id: profile.sub,
           name: profile.name,
-          email: email,
-          image: profile.picture,
+          email: profile.email ?? null,
+          image: profile.picture ?? null,
         };
       },
     },
@@ -67,18 +62,11 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, account }) {
       if (account) {
         token.provider = account.provider;
-        // Store the id_token for email extraction
-        if (account.id_token) {
-          token.id_token = account.id_token;
-        }
       }
       return token;
     },
-    async signIn({ user, account, profile }) {
-      console.log("Sign in attempt:", {
-        provider: account?.provider,
-        user: user?.email || user?.name,
-      });
+    async signIn({ account }) {
+      console.log("Sign in:", account?.provider);
       return true;
     },
   },
@@ -88,8 +76,8 @@ export const authOptions: NextAuthOptions = {
     error: "/",
   },
 
-  debug: process.env.NODE_ENV === "development",
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);
