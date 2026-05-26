@@ -14,7 +14,7 @@ import {
 } from "react-icons/ri";
 import TodoDashboard from "./TodoDashBoard";
 import { HiSparkles } from "react-icons/hi2";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaMicrosoft } from "react-icons/fa";
 import { SiLine } from "react-icons/si";
 
@@ -104,38 +104,39 @@ export function AuthCard() {
   const [signingIn, setSigningIn] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ตรวจสอบ error จาก URL query params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get("error");
+    if (errorParam) {
+      setError(`Login failed: ${errorParam}`);
+      // ลบ error param ออกจาก URL
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setError(null), 5000);
+    }
+  }, []);
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
+    setError(null);
 
-    const isLineWebView =
-      typeof window !== "undefined" && /Line\//.test(navigator.userAgent);
+    try {
+      // ใช้ callbackUrl ปัจจุบัน
+      const result = await signIn(provider, {
+        callbackUrl: window.location.href,
+        redirect: true,
+      });
 
-    if (isLineWebView) {
-      const callbackUrl = encodeURIComponent(window.location.href);
-      const signInUrl = `/api/auth/signin/${provider}?callbackUrl=${callbackUrl}`;
-
-      const liff = (
-        window as unknown as {
-          liff?: {
-            openWindow: (opt: { url: string; external: boolean }) => void;
-          };
-        }
-      ).liff;
-      if (liff?.openWindow) {
-        liff.openWindow({
-          url: window.location.origin + signInUrl,
-          external: true,
-        });
-      } else {
-        window.location.href = signInUrl;
-      }
+      console.log("Sign in result:", result);
+    } catch (error) {
+      console.error("Sign in error:", error);
+      setError("Failed to sign in. Please try again.");
       setSigningIn(false);
-      return;
     }
-
-    await signIn(provider);
   };
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await signOut({ callbackUrl: "/" });
@@ -201,6 +202,28 @@ export function AuthCard() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
+
+      {/* แสดง error ถ้ามี */}
+      {error && (
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            background: "rgba(239,68,68,0.9)",
+            color: "white",
+            padding: "12px 24px",
+            borderRadius: 12,
+            fontSize: 14,
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {session ? (
           <motion.div
@@ -211,6 +234,7 @@ export function AuthCard() {
             exit="exit"
             style={{ width: "100%" }}
           >
+            {/* ... ส่วน logged in เหมือนเดิม ... */}
             <div style={cardStyle}>
               <motion.div
                 custom={0}
@@ -406,7 +430,7 @@ export function AuthCard() {
             </div>
           </motion.div>
         ) : (
-          /* ══════════ LOGGED OUT ══════════ */
+          /* ══════════ LOGGED OUT (ส่วนที่เหลือเหมือนเดิม) ══════════ */
           <motion.div
             key="logged-out"
             variants={scaleIn}
@@ -415,7 +439,7 @@ export function AuthCard() {
             exit="exit"
             style={{ width: "100%" }}
           >
-            {/* ── Hero header ── */}
+            {/* Hero header */}
             <motion.div
               custom={0}
               variants={fadeUp}
@@ -476,9 +500,7 @@ export function AuthCard() {
               </p>
             </motion.div>
 
-            {/* ══════════════════════════════════════════
-                LOCKED PREVIEW BOARD
-            ══════════════════════════════════════════ */}
+            {/* Locked Preview Board */}
             <motion.div
               custom={1}
               variants={fadeUp}
@@ -494,7 +516,7 @@ export function AuthCard() {
                   border: "1px solid rgba(255,255,255,0.09)",
                 }}
               >
-                {/* ── Preview content (blurred & non-interactive) ── */}
+                {/* Preview content (blurred) */}
                 <div
                   style={{
                     pointerEvents: "none",
@@ -697,7 +719,7 @@ export function AuthCard() {
                   </div>
                 </div>
 
-                {/* ── Lock overlay ── */}
+                {/* Lock overlay */}
                 <div
                   onClick={() => setShowModal(true)}
                   style={{
@@ -771,7 +793,7 @@ export function AuthCard() {
               </div>
             </motion.div>
 
-            {/* ── Login card ── */}
+            {/* Login card */}
             <div style={{ ...cardStyle, padding: "2rem 2.5rem" }}>
               <motion.div
                 custom={2}
@@ -919,7 +941,7 @@ export function AuthCard() {
                 </motion.button>
               </motion.div>
 
-              {/* ── LINE Login ── */}
+              {/* LINE Login - เรียบง่ายขึ้น */}
               <motion.div
                 custom={5.5}
                 variants={fadeUp}
@@ -985,9 +1007,7 @@ export function AuthCard() {
         )}
       </AnimatePresence>
 
-      {/* ══════════════════════════════════════════
-          LOGIN MODAL (triggered by clicking preview)
-      ══════════════════════════════════════════ */}
+      {/* Modal (ส่วนที่เหลือเหมือนเดิม) */}
       <AnimatePresence>
         {showModal && (
           <>
@@ -1007,7 +1027,7 @@ export function AuthCard() {
               }}
             />
 
-            {/* Modal overlay — flex center ทุก WebView */}
+            {/* Modal overlay */}
             <div className="auth-modal-overlay">
               <motion.div
                 initial={{ opacity: 0, scale: 0.88, y: 24 }}
@@ -1136,7 +1156,7 @@ export function AuthCard() {
                     fontWeight: 600,
                     cursor: signingIn ? "not-allowed" : "pointer",
                     opacity: signingIn ? 0.65 : 1,
-                    marginBottom: "1.25rem",
+                    marginBottom: 10,
                     fontFamily: "'DM Sans', sans-serif",
                     boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
                   }}
@@ -1203,7 +1223,7 @@ export function AuthCard() {
   );
 }
 
-/* ── Sub-components ── */
+// InfoRow และ FeatureRow component เหมือนเดิม
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div
@@ -1245,6 +1265,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
 function FeatureRow({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
