@@ -16,6 +16,7 @@ import TodoDashboard from "./TodoDashBoard";
 import { HiSparkles } from "react-icons/hi2";
 import { useState } from "react";
 import { FaMicrosoft } from "react-icons/fa";
+import { SiLine } from "react-icons/si";
 
 /* ── Animation variants ── */
 const fadeUp = {
@@ -107,17 +108,13 @@ export function AuthCard() {
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
 
-    // ── ตรวจว่ากำลังรันใน LINE WebView ไหม ──
     const isLineWebView =
       typeof window !== "undefined" && /Line\//.test(navigator.userAgent);
 
     if (isLineWebView) {
-      // Google/Microsoft บล็อก OAuth ใน LINE embedded browser
-      // ต้องเปิด external browser แทน
       const callbackUrl = encodeURIComponent(window.location.href);
       const signInUrl = `/api/auth/signin/${provider}?callbackUrl=${callbackUrl}`;
 
-      // ถ้ามี LIFF SDK โหลดอยู่ — ใช้ openWindow เพื่อเปิด external browser
       const liff = (
         window as unknown as {
           liff?: {
@@ -131,7 +128,6 @@ export function AuthCard() {
           external: true,
         });
       } else {
-        // Fallback: redirect ตรงๆ (บางครั้ง LINE อนุญาต)
         window.location.href = signInUrl;
       }
       setSigningIn(false);
@@ -146,7 +142,6 @@ export function AuthCard() {
   };
 
   const mobileStyles = `
-    /* ── LINE LIFF / Mobile modal centering fix ── */
     .auth-modal-overlay {
       position: fixed !important;
       inset: 0 !important;
@@ -159,20 +154,15 @@ export function AuthCard() {
     .auth-modal-sheet {
       pointer-events: all !important;
       position: relative !important;
-      top: auto !important;
-      left: auto !important;
+      top: auto !important; left: auto !important;
       transform: none !important;
       width: 90% !important;
       max-width: 400px !important;
     }
-
     @media (max-width: 480px) {
       .auth-hero-h1 { font-size: 1.9rem !important; }
       .auth-btn     { min-height: 48px !important; font-size: 15px !important; }
-      /* bottom sheet บนมือถือ */
-      .auth-modal-overlay {
-        align-items: flex-end !important;
-      }
+      .auth-modal-overlay { align-items: flex-end !important; }
       .auth-modal-sheet {
         width: 100% !important;
         max-width: 100% !important;
@@ -212,7 +202,6 @@ export function AuthCard() {
     <>
       <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
       <AnimatePresence mode="wait">
-        {/* ══════════ LOGGED IN ══════════ */}
         {session ? (
           <motion.div
             key="logged-in"
@@ -930,6 +919,47 @@ export function AuthCard() {
                 </motion.button>
               </motion.div>
 
+              {/* ── LINE Login ── */}
+              <motion.div
+                custom={5.5}
+                variants={fadeUp}
+                initial="hidden"
+                animate="show"
+                style={{ marginTop: 10 }}
+              >
+                <motion.button
+                  onClick={() => handleSignIn("line")}
+                  disabled={signingIn}
+                  whileHover={{
+                    scale: 1.025,
+                    boxShadow:
+                      "0 8px 40px rgba(6,199,85,0.3),0 2px 16px rgba(0,0,0,0.35)",
+                  }}
+                  whileTap={{ scale: 0.975 }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    padding: "14px 24px",
+                    borderRadius: 14,
+                    background: "#06c755",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: signingIn ? "not-allowed" : "pointer",
+                    opacity: signingIn ? 0.65 : 1,
+                    boxShadow: "0 4px 20px rgba(6,199,85,0.25)",
+                    fontFamily: "'DM Sans',sans-serif",
+                  }}
+                >
+                  <SiLine style={{ fontSize: 22, flexShrink: 0 }} />
+                  {signingIn ? "Connecting…" : "Continue with LINE"}
+                </motion.button>
+              </motion.div>
+
               <motion.p
                 custom={6}
                 variants={fadeUp}
@@ -977,7 +1007,7 @@ export function AuthCard() {
               }}
             />
 
-            {/* Modal overlay — flex center ทำงานได้ทุก WebView รวม LINE LIFF */}
+            {/* Modal overlay — flex center ทุก WebView */}
             <div className="auth-modal-overlay">
               <motion.div
                 initial={{ opacity: 0, scale: 0.88, y: 24 }}
@@ -1115,6 +1145,39 @@ export function AuthCard() {
                   {signingIn ? "Connecting…" : "Continue with Microsoft"}
                 </motion.button>
 
+                {/* LINE */}
+                <motion.button
+                  onClick={() => handleSignIn("line")}
+                  disabled={signingIn}
+                  whileHover={{
+                    scale: 1.025,
+                    boxShadow: "0 8px 30px rgba(6,199,85,0.25)",
+                  }}
+                  whileTap={{ scale: 0.975 }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    padding: "13px 24px",
+                    borderRadius: 14,
+                    background: "#06c755",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: signingIn ? "not-allowed" : "pointer",
+                    opacity: signingIn ? 0.65 : 1,
+                    marginBottom: "1.25rem",
+                    fontFamily: "'DM Sans', sans-serif",
+                    boxShadow: "0 4px 16px rgba(6,199,85,0.2)",
+                  }}
+                >
+                  <SiLine style={{ fontSize: 20 }} />
+                  {signingIn ? "Connecting…" : "Continue with LINE"}
+                </motion.button>
+
                 {/* Cancel */}
                 <button
                   onClick={() => setShowModal(false)}
@@ -1133,7 +1196,6 @@ export function AuthCard() {
                 </button>
               </motion.div>
             </div>
-            {/* end auth-modal-overlay */}
           </>
         )}
       </AnimatePresence>

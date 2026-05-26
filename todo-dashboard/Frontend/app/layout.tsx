@@ -36,8 +36,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#070708" />
         {/*
           LINE LIFF WebView scroll fix
-          ต้องอยู่ใน <head> ก่อน Tailwind จะโหลด
-          เพื่อ override overflow:hidden ที่ Tailwind ใส่บน body
         */}
         <style
           dangerouslySetInnerHTML={{
