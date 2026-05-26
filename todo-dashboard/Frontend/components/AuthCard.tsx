@@ -146,19 +146,34 @@ export function AuthCard() {
   };
 
   const mobileStyles = `
+    /* ── LINE LIFF / Mobile modal centering fix ── */
+    .auth-modal-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 101 !important;
+      pointer-events: none !important;
+    }
+    .auth-modal-sheet {
+      pointer-events: all !important;
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      transform: none !important;
+      width: 90% !important;
+      max-width: 400px !important;
+    }
+
     @media (max-width: 480px) {
-      .auth-card-desktop {
-        border-radius: 20px !important;
-        padding: 1.35rem !important;
-      }
       .auth-hero-h1 { font-size: 1.9rem !important; }
       .auth-btn     { min-height: 48px !important; font-size: 15px !important; }
+      /* bottom sheet บนมือถือ */
+      .auth-modal-overlay {
+        align-items: flex-end !important;
+      }
       .auth-modal-sheet {
-        top: auto !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        transform: none !important;
         width: 100% !important;
         max-width: 100% !important;
         border-radius: 24px 24px 0 0 !important;
@@ -962,167 +977,163 @@ export function AuthCard() {
               }}
             />
 
-            {/* Modal card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.88, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 12 }}
-              transition={{
-                duration: 0.35,
-                ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-              }}
-              className="auth-modal-sheet"
-              style={{
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                zIndex: 101,
-                transform: "translate(-50%, -50%)",
-                width: "90%",
-                maxWidth: 400,
-                background: "rgba(12,10,20,0.97)",
-                border: "1px solid rgba(139,92,246,0.3)",
-                borderRadius: 28,
-                padding: "2.5rem 2rem",
-                boxShadow:
-                  "0 0 0 1px rgba(255,255,255,0.05), 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(139,92,246,0.15)",
-              }}
-            >
-              {/* Lock icon */}
-              <div
+            {/* Modal overlay — flex center ทำงานได้ทุก WebView รวม LINE LIFF */}
+            <div className="auth-modal-overlay">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.88, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                transition={{
+                  duration: 0.35,
+                  ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+                }}
+                className="auth-modal-sheet"
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: "1.25rem",
+                  background: "rgba(12,10,20,0.97)",
+                  border: "1px solid rgba(139,92,246,0.3)",
+                  borderRadius: 28,
+                  padding: "2.5rem 2rem",
+                  boxShadow:
+                    "0 0 0 1px rgba(255,255,255,0.05), 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(139,92,246,0.15)",
                 }}
               >
+                {/* Lock icon */}
                 <div
                   style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 16,
-                    background: "rgba(139,92,246,0.18)",
-                    border: "1px solid rgba(139,92,246,0.35)",
+                    display: "flex",
+                    justifyContent: "center",
+                    marginBottom: "1.25rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 16,
+                      background: "rgba(139,92,246,0.18)",
+                      border: "1px solid rgba(139,92,246,0.35)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 0 30px rgba(139,92,246,0.3)",
+                    }}
+                  >
+                    <RiLockLine style={{ fontSize: 22, color: "#c4b5fd" }} />
+                  </div>
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: "'Syne', sans-serif",
+                    fontWeight: 800,
+                    fontSize: "1.35rem",
+                    color: "#fff",
+                    textAlign: "center",
+                    letterSpacing: "-0.02em",
+                    marginBottom: 8,
+                  }}
+                >
+                  Unlock Your Dashboard
+                </h2>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.38)",
+                    textAlign: "center",
+                    lineHeight: 1.7,
+                    marginBottom: "1.75rem",
+                    fontWeight: 300,
+                  }}
+                >
+                  Sign in to manage your tasks, track progress, and stay
+                  productive across all your devices.
+                </p>
+
+                {/* Google */}
+                <motion.button
+                  onClick={() => handleSignIn("google")}
+                  disabled={signingIn}
+                  whileHover={{
+                    scale: 1.025,
+                    boxShadow: "0 8px 30px rgba(167,139,250,0.2)",
+                  }}
+                  whileTap={{ scale: 0.975 }}
+                  style={{
+                    width: "100%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 0 30px rgba(139,92,246,0.3)",
+                    gap: 10,
+                    padding: "13px 24px",
+                    borderRadius: 14,
+                    background: "#ffffff",
+                    border: "none",
+                    color: "#111827",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: signingIn ? "not-allowed" : "pointer",
+                    opacity: signingIn ? 0.65 : 1,
+                    marginBottom: 10,
+                    fontFamily: "'DM Sans', sans-serif",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
                   }}
                 >
-                  <RiLockLine style={{ fontSize: 22, color: "#c4b5fd" }} />
-                </div>
-              </div>
+                  <FcGoogle style={{ fontSize: 20 }} />
+                  {signingIn ? "Connecting…" : "Continue with Google"}
+                </motion.button>
 
-              <h2
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "1.35rem",
-                  color: "#fff",
-                  textAlign: "center",
-                  letterSpacing: "-0.02em",
-                  marginBottom: 8,
-                }}
-              >
-                Unlock Your Dashboard
-              </h2>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "rgba(255,255,255,0.38)",
-                  textAlign: "center",
-                  lineHeight: 1.7,
-                  marginBottom: "1.75rem",
-                  fontWeight: 300,
-                }}
-              >
-                Sign in to manage your tasks, track progress, and stay
-                productive across all your devices.
-              </p>
+                {/* Microsoft */}
+                <motion.button
+                  onClick={() => handleSignIn("azure-ad")}
+                  disabled={signingIn}
+                  whileHover={{
+                    scale: 1.025,
+                    boxShadow: "0 8px 30px rgba(37,99,235,0.2)",
+                  }}
+                  whileTap={{ scale: 0.975 }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    padding: "13px 24px",
+                    borderRadius: 14,
+                    background: "#2563eb",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: signingIn ? "not-allowed" : "pointer",
+                    opacity: signingIn ? 0.65 : 1,
+                    marginBottom: "1.25rem",
+                    fontFamily: "'DM Sans', sans-serif",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <FaMicrosoft style={{ fontSize: 18 }} />
+                  {signingIn ? "Connecting…" : "Continue with Microsoft"}
+                </motion.button>
 
-              {/* Google */}
-              <motion.button
-                onClick={() => handleSignIn("google")}
-                disabled={signingIn}
-                whileHover={{
-                  scale: 1.025,
-                  boxShadow: "0 8px 30px rgba(167,139,250,0.2)",
-                }}
-                whileTap={{ scale: 0.975 }}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                  padding: "13px 24px",
-                  borderRadius: 14,
-                  background: "#ffffff",
-                  border: "none",
-                  color: "#111827",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: signingIn ? "not-allowed" : "pointer",
-                  opacity: signingIn ? 0.65 : 1,
-                  marginBottom: 10,
-                  fontFamily: "'DM Sans', sans-serif",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-                }}
-              >
-                <FcGoogle style={{ fontSize: 20 }} />
-                {signingIn ? "Connecting…" : "Continue with Google"}
-              </motion.button>
-
-              {/* Microsoft */}
-              <motion.button
-                onClick={() => handleSignIn("azure-ad")}
-                disabled={signingIn}
-                whileHover={{
-                  scale: 1.025,
-                  boxShadow: "0 8px 30px rgba(37,99,235,0.2)",
-                }}
-                whileTap={{ scale: 0.975 }}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                  padding: "13px 24px",
-                  borderRadius: 14,
-                  background: "#2563eb",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: signingIn ? "not-allowed" : "pointer",
-                  opacity: signingIn ? 0.65 : 1,
-                  marginBottom: "1.25rem",
-                  fontFamily: "'DM Sans', sans-serif",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-                }}
-              >
-                <FaMicrosoft style={{ fontSize: 18 }} />
-                {signingIn ? "Connecting…" : "Continue with Microsoft"}
-              </motion.button>
-
-              {/* Cancel */}
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255,255,255,0.25)",
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
-                  padding: "6px",
-                }}
-              >
-                Maybe later
-              </button>
-            </motion.div>
+                {/* Cancel */}
+                <button
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    width: "100%",
+                    background: "none",
+                    border: "none",
+                    color: "rgba(255,255,255,0.25)",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                    padding: "6px",
+                  }}
+                >
+                  Maybe later
+                </button>
+              </motion.div>
+            </div>
+            {/* end auth-modal-overlay */}
           </>
         )}
       </AnimatePresence>

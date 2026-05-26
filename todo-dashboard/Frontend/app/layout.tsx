@@ -34,6 +34,28 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <meta name="theme-color" content="#070708" />
+        {/*
+          LINE LIFF WebView scroll fix
+          ต้องอยู่ใน <head> ก่อน Tailwind จะโหลด
+          เพื่อ override overflow:hidden ที่ Tailwind ใส่บน body
+        */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+          html {
+            height: -webkit-fill-available;
+          }
+          body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            position: static !important;
+          }
+        `,
+          }}
+        />
       </head>
       <body
         className="min-h-screen overflow-x-hidden bg-[#070708] text-white antialiased"
