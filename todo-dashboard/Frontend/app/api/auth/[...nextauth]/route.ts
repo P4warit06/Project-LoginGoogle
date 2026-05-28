@@ -1,9 +1,10 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   trustHost: true,
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -21,34 +22,53 @@ export const authOptions: NextAuthOptions = {
       name: "LINE",
       type: "oauth",
 
-      wellKnown: "https://access.line.me/.well-known/openid-configuration",
+      version: "2.0",
 
       authorization: {
+        url: "https://access.line.me/oauth2/v2.1/authorize",
         params: {
           scope: "profile openid",
         },
       },
 
-      idToken: true,
-      checks: ["pkce", "state"],
+      token: "https://api.line.me/oauth2/v2.1/token",
 
-      clientId: process.env.LINE_LOGIN_CLIENT_ID!,
-      clientSecret: process.env.LINE_LOGIN_CLIENT_SECRET!,
+      userinfo: "https://api.line.me/v2/profile",
 
-      profile(profile) {
+      clientId: process.env.LINE_LOGIN_CLIENT_ID,
+      clientSecret: process.env.LINE_LOGIN_CLIENT_SECRET,
+
+      profile(profile: any) {
         return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email ?? null,
-          image: profile.picture ?? null,
+          id: profile.userId,
+          name: profile.displayName,
+          image: profile.pictureUrl,
+          email: null,
         };
       },
     },
   ],
 
-  pages: {
-    signIn: "/",
-    error: "/",
+  callbacks: {
+    async jwt({ token, account, profile }: { token: any; account: any; profile: any }) {
+      if (account) {
+        token.provider = account.provider;
+      }
+
+      if (profile) {
+        token.picture = profile.pictureUrl;
+      }
+
+      return token;
+    },
+
+    async session({ session, token }: { session: any; token: any }) {
+      if (token.picture) {
+        session.user.image = token.picture as string;
+      }
+
+      return session;
+    },
   },
 
   secret: process.env.NEXTAUTH_SECRET,
