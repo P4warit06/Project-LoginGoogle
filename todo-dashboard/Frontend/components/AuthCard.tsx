@@ -27,7 +27,12 @@ const fadeUp = {
     transition: {
       delay: i * 0.09,
       duration: 0.55,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number] as [
+        number,
+        number,
+        number,
+        number
+      ],
     },
   }),
 };
@@ -39,7 +44,12 @@ const scaleIn = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number] as [
+        number,
+        number,
+        number,
+        number
+      ],
     },
   },
   exit: { opacity: 0, scale: 0.96, transition: { duration: 0.2 } },
@@ -111,89 +121,19 @@ export function AuthCard() {
     const lineUA = /Line\//.test(navigator.userAgent);
     setIsLineWebView(lineUA);
 
-    // ── ตรวจ error จาก URL ──
     const params = new URLSearchParams(window.location.search);
-    const errorParam = params.get("error");
-    if (errorParam) {
-      setError(
-        lineUA
-          ? "กรุณาใช้ปุ่ม 'Continue with LINE' เพื่อเข้าสู่ระบบ"
-          : `Login failed: ${errorParam}`
-      );
+    const err = params.get("error");
+    if (err) {
+      setError("เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
       window.history.replaceState({}, "", window.location.pathname);
-      setTimeout(() => setError(null), 6000);
-
-      // ถ้า error ให้ล้าง flag ออก เพื่อให้ auto-login ไม่วนซ้ำ
-      sessionStorage.removeItem("line_auto_login");
-      return;
+      setTimeout(() => setError(null), 5000);
     }
-
-    // ── LINE WebView Auto-login ──
-    // ใช้ sessionStorage เป็น flag ป้องกันวนลูป
-    // flag จะหายเมื่อปิด tab/window เท่านั้น
-    if (lineUA && status === "unauthenticated") {
-      const already = sessionStorage.getItem("line_auto_login");
-      if (!already) {
-        sessionStorage.setItem("line_auto_login", "1");
-        const t = setTimeout(() => {
-          signIn("line", { callbackUrl: "/" });
-        }, 600);
-        return () => clearTimeout(t);
-      }
-    }
-
-    // ── login สำเร็จ → ล้าง flag ──
-    if (status === "authenticated") {
-      sessionStorage.removeItem("line_auto_login");
-    }
-  }, [status]);
-
-  // ตรวจว่า auto-login กำลังทำงาน (แสดง spinner)
-  const isAutoLogging =
-    isLineWebView &&
-    status === "unauthenticated" &&
-    !!sessionStorage.getItem("line_auto_login");
+  }, []);
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
     setError(null);
-
-    // LINE → signIn ตรงๆ ทำงานได้ใน LINE WebView
-    if (provider === "line") {
-      sessionStorage.setItem("line_auto_login", "1");
-      await signIn("line", { callbackUrl: "/" });
-      return;
-    }
-
-    // Google / Microsoft ถูก Google บล็อกใน LINE WebView
-    if (isLineWebView) {
-      const origin = window.location.origin;
-      const url = `${origin}/api/auth/signin/${provider}?callbackUrl=${encodeURIComponent(
-        origin
-      )}`;
-      const liff = (
-        window as unknown as {
-          liff?: {
-            openWindow: (o: { url: string; external: boolean }) => void;
-          };
-        }
-      ).liff;
-      if (liff?.openWindow) {
-        liff.openWindow({ url, external: true });
-      } else {
-        window.location.href = url;
-      }
-      setSigningIn(false);
-      return;
-    }
-
-    // Browser ปกติ
-    try {
-      await signIn(provider, { callbackUrl: "/", redirect: true });
-    } catch {
-      setError("Failed to sign in. Please try again.");
-      setSigningIn(false);
-    }
+    await signIn(provider, { callbackUrl: "/" });
   };
 
   const handleSignOut = async () => {
@@ -232,17 +172,15 @@ export function AuthCard() {
     }
   `;
 
-  if (status === "loading" || isAutoLogging) {
+  if (status === "loading") {
     return (
       <div
         style={{
           ...cardStyle,
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           minHeight: 200,
-          gap: 14,
         }}
       >
         <div
@@ -250,20 +188,11 @@ export function AuthCard() {
             width: 36,
             height: 36,
             borderRadius: "50%",
-            border: isAutoLogging
-              ? "2px solid rgba(6,199,85,0.25)"
-              : "2px solid rgba(167,139,250,0.2)",
-            borderTopColor: isAutoLogging ? "#06c755" : "#a78bfa",
+            border: "2px solid rgba(167,139,250,0.2)",
+            borderTopColor: "#a78bfa",
             animation: "spin 0.8s linear infinite",
           }}
         />
-        {isAutoLogging && (
-          <p
-            style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.4)" }}
-          >
-            กำลังเข้าสู่ระบบด้วย LINE...
-          </p>
-        )}
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -891,6 +820,35 @@ export function AuthCard() {
                 />
               </motion.div>
 
+              {/* ── Banner เมื่ออยู่ใน LINE WebView ── */}
+              {isLineWebView && (
+                <motion.div
+                  custom={2.5}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="show"
+                  style={{
+                    marginBottom: "1rem",
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    background: "rgba(6,199,85,0.1)",
+                    border: "1px solid rgba(6,199,85,0.25)",
+                    textAlign: "center",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "#4ade80",
+                      fontWeight: 500,
+                    }}
+                  >
+                    กรุณาเข้าสู่ระบบด้วย LINE
+                  </p>
+                </motion.div>
+              )}
+
               <motion.div
                 custom={3}
                 variants={fadeUp}
@@ -932,90 +890,87 @@ export function AuthCard() {
 
               {/* Google — ซ่อนใน LINE WebView */}
               {!isLineWebView && (
-                <motion.div
-                  custom={4}
-                  variants={fadeUp}
-                  initial="hidden"
-                  animate="show"
-                >
-                  <motion.button
-                    onClick={() => handleSignIn("google")}
-                    disabled={signingIn}
-                    whileHover={{
-                      scale: 1.025,
-                      boxShadow:
-                        "0 8px 40px rgba(167,139,250,0.25),0 2px 16px rgba(0,0,0,0.35)",
-                    }}
-                    whileTap={{ scale: 0.975 }}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 10,
-                      padding: "14px 24px",
-                      borderRadius: 14,
-                      background: "#ffffff",
-                      border: "none",
-                      color: "#111827",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: signingIn ? "not-allowed" : "pointer",
-                      opacity: signingIn ? 0.65 : 1,
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                      fontFamily: "'DM Sans',sans-serif",
-                    }}
+                <>
+                  <motion.div
+                    custom={4}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="show"
                   >
-                    <FcGoogle style={{ fontSize: 22, flexShrink: 0 }} />
-                    {signingIn ? "Connecting…" : "Continue with Google"}
-                  </motion.button>
-                </motion.div>
+                    <motion.button
+                      onClick={() => handleSignIn("google")}
+                      disabled={signingIn}
+                      whileHover={{
+                        scale: 1.025,
+                        boxShadow: "0 8px 40px rgba(167,139,250,0.25)",
+                      }}
+                      whileTap={{ scale: 0.975 }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                        padding: "14px 24px",
+                        borderRadius: 14,
+                        background: "#ffffff",
+                        border: "none",
+                        color: "#111827",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: signingIn ? "not-allowed" : "pointer",
+                        opacity: signingIn ? 0.65 : 1,
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                        fontFamily: "'DM Sans',sans-serif",
+                      }}
+                    >
+                      <FcGoogle style={{ fontSize: 22, flexShrink: 0 }} />
+                      {signingIn ? "Connecting…" : "Continue with Google"}
+                    </motion.button>
+                  </motion.div>
+
+                  <motion.div
+                    custom={5}
+                    variants={fadeUp}
+                    initial="hidden"
+                    animate="show"
+                    style={{ marginTop: 10 }}
+                  >
+                    <motion.button
+                      onClick={() => handleSignIn("azure-ad")}
+                      disabled={signingIn}
+                      whileHover={{
+                        scale: 1.025,
+                        boxShadow: "0 8px 40px rgba(37,99,235,0.25)",
+                      }}
+                      whileTap={{ scale: 0.975 }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                        padding: "14px 24px",
+                        borderRadius: 14,
+                        background: "#2563eb",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: signingIn ? "not-allowed" : "pointer",
+                        opacity: signingIn ? 0.65 : 1,
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                        fontFamily: "'DM Sans',sans-serif",
+                      }}
+                    >
+                      <FaMicrosoft style={{ fontSize: 20, flexShrink: 0 }} />
+                      {signingIn ? "Connecting…" : "Continue with Microsoft"}
+                    </motion.button>
+                  </motion.div>
+                </>
               )}
 
-              {/* Microsoft — ซ่อนใน LINE WebView */}
-              {!isLineWebView && (
-                <motion.div
-                  custom={5}
-                  variants={fadeUp}
-                  initial="hidden"
-                  animate="show"
-                  style={{ marginTop: 10 }}
-                >
-                  <motion.button
-                    onClick={() => handleSignIn("azure-ad")}
-                    disabled={signingIn}
-                    whileHover={{
-                      scale: 1.025,
-                      boxShadow:
-                        "0 8px 40px rgba(37,99,235,0.25),0 2px 16px rgba(0,0,0,0.35)",
-                    }}
-                    whileTap={{ scale: 0.975 }}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 10,
-                      padding: "14px 24px",
-                      borderRadius: 14,
-                      background: "#2563eb",
-                      border: "none",
-                      color: "#fff",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      cursor: signingIn ? "not-allowed" : "pointer",
-                      opacity: signingIn ? 0.65 : 1,
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                      fontFamily: "'DM Sans',sans-serif",
-                    }}
-                  >
-                    <FaMicrosoft style={{ fontSize: 20, flexShrink: 0 }} />
-                    {signingIn ? "Connecting…" : "Continue with Microsoft"}
-                  </motion.button>
-                </motion.div>
-              )}
-
-              {/* LINE Login — แสดงเสมอทุก platform */}
+              {/* LINE — แสดงเสมอ */}
               <motion.div
                 custom={isLineWebView ? 4 : 5.5}
                 variants={fadeUp}
@@ -1028,8 +983,7 @@ export function AuthCard() {
                   disabled={signingIn}
                   whileHover={{
                     scale: 1.025,
-                    boxShadow:
-                      "0 8px 40px rgba(6,199,85,0.3),0 2px 16px rgba(0,0,0,0.35)",
+                    boxShadow: "0 8px 40px rgba(6,199,85,0.3)",
                   }}
                   whileTap={{ scale: 0.975 }}
                   style={{
@@ -1109,7 +1063,12 @@ export function AuthCard() {
                 exit={{ opacity: 0, scale: 0.92, y: 12 }}
                 transition={{
                   duration: 0.35,
-                  ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+                  ease: [0.22, 1, 0.36, 1] as [
+                    number,
+                    number,
+                    number,
+                    number
+                  ] as [number, number, number, number],
                 }}
                 className="auth-modal-sheet"
                 style={{
