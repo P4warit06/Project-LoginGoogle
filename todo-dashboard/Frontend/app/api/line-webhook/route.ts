@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
             messages: [
               {
                 type: "text",
-                text: `✅ เชื่อมต่อสำเร็จ!\nuserId: ${userId}\n\nคัดลอก userId นี้ไปใส่ใน Vercel Env ชื่อ LINE_USER_ID`,
+                text: ` เชื่อมต่อสำเร็จ!\nuserId: ${userId}\n\nคัดลอก userId นี้ไปใส่ใน Vercel Env ชื่อ LINE_USER_ID`,
               },
             ],
           }),
