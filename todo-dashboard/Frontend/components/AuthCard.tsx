@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 import { FaMicrosoft } from "react-icons/fa";
 import { SiLine } from "react-icons/si";
 
+/* ── Animation variants ── */
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   show: (i: number) => ({
@@ -55,6 +56,7 @@ const cardStyle: React.CSSProperties = {
     "0 0 0 1px rgba(255,255,255,0.05), 0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
 };
 
+/* ── Fake todo data for preview ── */
 const PREVIEW_TODOS = [
   {
     id: 1,
@@ -105,50 +107,70 @@ export function AuthCard() {
   const [error, setError] = useState<string | null>(null);
   const [isLineWebView, setIsLineWebView] = useState(false);
 
-  // ── ตรวจสอบ LINE WebView + auto-login + error params ──
   useEffect(() => {
     const lineUA = /Line\//.test(navigator.userAgent);
     setIsLineWebView(lineUA);
 
-    // 2. ถ้าอยู่ใน LINE WebView และยังไม่ได้ login → auto-login ด้วย LINE
-    if (lineUA && status === "unauthenticated") {
-      // หน่วงเล็กน้อยให้ session โหลดก่อน
-      const timer = setTimeout(() => {
-        signIn("line", { callbackUrl: "/" });
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-
-    // 3. ตรวจ error จาก URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorParam = urlParams.get("error");
+    // ── ตรวจ error จาก URL ──
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get("error");
     if (errorParam) {
-      // ถ้า OAuthSignin error ใน LINE WebView → แสดง hint ให้ใช้ LINE login
-      if (lineUA) {
-        setError("กรุณาใช้ปุ่ม 'Continue with LINE' เพื่อเข้าสู่ระบบ");
-      } else {
-        setError(`Login failed: ${errorParam}`);
-      }
+      setError(
+        lineUA
+          ? "กรุณาใช้ปุ่ม 'Continue with LINE' เพื่อเข้าสู่ระบบ"
+          : `Login failed: ${errorParam}`
+      );
       window.history.replaceState({}, "", window.location.pathname);
       setTimeout(() => setError(null), 6000);
+
+      // ถ้า error ให้ล้าง flag ออก เพื่อให้ auto-login ไม่วนซ้ำ
+      sessionStorage.removeItem("line_auto_login");
+      return;
+    }
+
+    // ── LINE WebView Auto-login ──
+    // ใช้ sessionStorage เป็น flag ป้องกันวนลูป
+    // flag จะหายเมื่อปิด tab/window เท่านั้น
+    if (lineUA && status === "unauthenticated") {
+      const already = sessionStorage.getItem("line_auto_login");
+      if (!already) {
+        sessionStorage.setItem("line_auto_login", "1");
+        const t = setTimeout(() => {
+          signIn("line", { callbackUrl: "/" });
+        }, 600);
+        return () => clearTimeout(t);
+      }
+    }
+
+    // ── login สำเร็จ → ล้าง flag ──
+    if (status === "authenticated") {
+      sessionStorage.removeItem("line_auto_login");
     }
   }, [status]);
+
+  // ตรวจว่า auto-login กำลังทำงาน (แสดง spinner)
+  const isAutoLogging =
+    isLineWebView &&
+    status === "unauthenticated" &&
+    !!sessionStorage.getItem("line_auto_login");
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
     setError(null);
 
+    // LINE → signIn ตรงๆ ทำงานได้ใน LINE WebView
     if (provider === "line") {
+      sessionStorage.setItem("line_auto_login", "1");
       await signIn("line", { callbackUrl: "/" });
       return;
     }
 
+    // Google / Microsoft ถูก Google บล็อกใน LINE WebView
     if (isLineWebView) {
       const origin = window.location.origin;
-      const signInUrl = `${origin}/api/auth/signin/${provider}?callbackUrl=${encodeURIComponent(
+      const url = `${origin}/api/auth/signin/${provider}?callbackUrl=${encodeURIComponent(
         origin
       )}`;
-
       const liff = (
         window as unknown as {
           liff?: {
@@ -156,16 +178,16 @@ export function AuthCard() {
           };
         }
       ).liff;
-
       if (liff?.openWindow) {
-        liff.openWindow({ url: signInUrl, external: true });
+        liff.openWindow({ url, external: true });
       } else {
-        window.location.href = signInUrl;
+        window.location.href = url;
       }
       setSigningIn(false);
       return;
     }
 
+    // Browser ปกติ
     try {
       await signIn(provider, { callbackUrl: "/", redirect: true });
     } catch {
@@ -210,7 +232,7 @@ export function AuthCard() {
     }
   `;
 
-  if (status === "loading" || (isLineWebView && status === "unauthenticated")) {
+  if (status === "loading" || isAutoLogging) {
     return (
       <div
         style={{
@@ -219,8 +241,8 @@ export function AuthCard() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: 220,
-          gap: 16,
+          minHeight: 200,
+          gap: 14,
         }}
       >
         <div
@@ -228,16 +250,16 @@ export function AuthCard() {
             width: 36,
             height: 36,
             borderRadius: "50%",
-            border: isLineWebView
-              ? "2px solid rgba(6,199,85,0.2)"
+            border: isAutoLogging
+              ? "2px solid rgba(6,199,85,0.25)"
               : "2px solid rgba(167,139,250,0.2)",
-            borderTopColor: isLineWebView ? "#06c755" : "#a78bfa",
+            borderTopColor: isAutoLogging ? "#06c755" : "#a78bfa",
             animation: "spin 0.8s linear infinite",
           }}
         />
-        {isLineWebView && (
+        {isAutoLogging && (
           <p
-            style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", margin: 0 }}
+            style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.4)" }}
           >
             กำลังเข้าสู่ระบบด้วย LINE...
           </p>
@@ -251,6 +273,7 @@ export function AuthCard() {
     <>
       <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
 
+      {/* แสดง error ถ้ามี */}
       {error && (
         <div
           style={{
@@ -867,6 +890,7 @@ export function AuthCard() {
                   text="Smart prioritization for peak focus"
                 />
               </motion.div>
+
               <motion.div
                 custom={3}
                 variants={fadeUp}
@@ -895,7 +919,7 @@ export function AuthCard() {
                     fontWeight: 600,
                   }}
                 >
-                  {isLineWebView ? "เข้าสู่ระบบ" : "Get Started"}
+                  Get Started
                 </span>
                 <div
                   style={{
@@ -905,7 +929,8 @@ export function AuthCard() {
                   }}
                 />
               </motion.div>
-              {/* Google — ซ่อนใน LINE WebView เพราะ Google บล็อก embedded browser */}
+
+              {/* Google — ซ่อนใน LINE WebView */}
               {!isLineWebView && (
                 <motion.div
                   custom={4}
@@ -945,8 +970,8 @@ export function AuthCard() {
                     {signingIn ? "Connecting…" : "Continue with Google"}
                   </motion.button>
                 </motion.div>
-              )}{" "}
-              {/* end !isLineWebView Google */}
+              )}
+
               {/* Microsoft — ซ่อนใน LINE WebView */}
               {!isLineWebView && (
                 <motion.div
@@ -988,9 +1013,9 @@ export function AuthCard() {
                     {signingIn ? "Connecting…" : "Continue with Microsoft"}
                   </motion.button>
                 </motion.div>
-              )}{" "}
-              {/* end !isLineWebView Microsoft */}
-              {/* LINE Login — แสดงเสมอ */}
+              )}
+
+              {/* LINE Login — แสดงเสมอทุก platform */}
               <motion.div
                 custom={isLineWebView ? 4 : 5.5}
                 variants={fadeUp}
@@ -1030,6 +1055,7 @@ export function AuthCard() {
                   {signingIn ? "Connecting…" : "Continue with LINE"}
                 </motion.button>
               </motion.div>
+
               <motion.p
                 custom={6}
                 variants={fadeUp}
