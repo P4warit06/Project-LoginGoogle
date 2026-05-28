@@ -120,7 +120,14 @@ export function AuthCard() {
   useEffect(() => {
     const lineUA = /Line\//.test(navigator.userAgent);
     setIsLineWebView(lineUA);
-
+    if (lineUA) {
+      const currentUrl = window.location.href;
+      if (!currentUrl.includes("openExternalBrowser=1")) {
+        window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(
+          currentUrl + "?openExternalBrowser=1"
+        )}`;
+      }
+    }
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
     if (err) {
