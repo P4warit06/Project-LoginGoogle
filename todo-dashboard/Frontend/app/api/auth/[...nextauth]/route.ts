@@ -3,7 +3,6 @@ import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
 export const authOptions = {
-  trustHost: true,
   session: {
     strategy: "jwt",
   },
