@@ -4,7 +4,25 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 
 export const authOptions = {
   trustHost: true,
+  session: {
+    strategy: "jwt",
+  },
 
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -50,7 +68,15 @@ export const authOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, account, profile }: { token: any; account: any; profile: any }) {
+    async jwt({
+      token,
+      account,
+      profile,
+    }: {
+      token: any;
+      account: any;
+      profile: any;
+    }) {
       if (account) {
         token.provider = account.provider;
       }
@@ -73,6 +99,7 @@ export const authOptions = {
 
   secret: process.env.NEXTAUTH_SECRET,
 };
+
 
 const handler = NextAuth(authOptions);
 
