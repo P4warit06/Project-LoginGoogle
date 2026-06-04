@@ -16,7 +16,7 @@ export const authOptions = {
 
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
+        sameSite:"lax" as const,
         path: "/",
         secure: process.env.NODE_ENV === "production" ,
       },
@@ -37,8 +37,7 @@ export const authOptions = {
     {
       id: "line",
       name: "LINE",
-      type: "oauth",
-
+      type: "oauth" as const , 
       version: "2.0",
 
       authorization: {
