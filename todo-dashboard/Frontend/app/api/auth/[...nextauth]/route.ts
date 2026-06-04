@@ -1,10 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import { JWT } from "next-auth/jwt";
+import { Session } from "next-auth";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   session: {
-    strategy: "jwt" as const ,
+    strategy: "jwt",
   },
 
   cookies: {
@@ -16,12 +18,13 @@ export const authOptions = {
 
       options: {
         httpOnly: true,
-        sameSite:"lax" as const,
+        sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production" ,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -37,7 +40,7 @@ export const authOptions = {
     {
       id: "line",
       name: "LINE",
-      type: "oauth" as const , 
+      type: "oauth",
       version: "2.0",
 
       authorization: {
@@ -66,38 +69,28 @@ export const authOptions = {
   ],
 
   callbacks: {
-    async jwt({
-      token,
-      account,
-      profile,
-    }: {
-      token: any;
-      account: any;
-      profile: any;
-    }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         token.provider = account.provider;
       }
 
-      if (profile) {
+      if (profile && "pictureUrl" in profile) {
         token.picture = profile.pictureUrl;
       }
 
       return token;
     },
 
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }) {
       if (token.picture) {
         session.user.image = token.picture as string;
       }
-
       return session;
     },
   },
 
   secret: process.env.NEXTAUTH_SECRET,
 };
-
 
 const handler = NextAuth(authOptions);
 
