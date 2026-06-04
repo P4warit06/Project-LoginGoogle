@@ -130,12 +130,20 @@ export function AuthCard() {
       }
     }
     const params = new URLSearchParams(window.location.search);
-    const err = params.get("error");
-    if (err) {
-      setError("เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
-      window.history.replaceState({}, "", window.location.pathname);
-      setTimeout(() => setError(null), 5000);
-    }
+   const err = params.get("error");
+   if (err) {
+     const errorMap: Record<string, string> = {
+       OAuthCallback: "OAuthCallback — Callback URL ไม่ตรง หรือ Secret ผิด",
+       OAuthSignin: "OAuthSignin — Client ID / Secret ไม่ถูกต้อง",
+       Callback: "Callback — NEXTAUTH_URL ผิด หรือ Secret หาย",
+       OAuthAccountNotLinked: "อีเมลนี้เชื่อมกับ provider อื่นอยู่แล้ว",
+       AccessDenied: "ผู้ใช้กด Cancel / ปฏิเสธการอนุญาต",
+       Configuration: "Configuration — ตรวจสอบ env vars ทั้งหมด",
+     };
+     setError(errorMap[err] ?? `Error: ${err}`); // แสดง code จริงถ้าไม่อยู่ใน map
+     window.history.replaceState({}, "", window.location.pathname);
+     setTimeout(() => setError(null), 8000);
+   }
   }, []);
   
 
