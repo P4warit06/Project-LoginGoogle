@@ -2,7 +2,6 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { JWT } from "next-auth/jwt";
-import { Session } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -75,15 +74,16 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (profile && "pictureUrl" in profile) {
-        token.picture = profile.pictureUrl;
+        // ใช้ type assertion เพราะรู้ว่า pictureUrl เป็น string
+        token.picture = (profile as any).pictureUrl;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      if (token.picture) {
-        session.user.image = token.picture as string;
+      if (token.picture && typeof token.picture === "string") {
+        session.user.image = token.picture;
       }
       return session;
     },
