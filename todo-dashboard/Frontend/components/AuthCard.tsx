@@ -123,8 +123,9 @@ export function AuthCard() {
     if (lineUA) {
       const currentUrl = window.location.href;
       if (!currentUrl.includes("openExternalBrowser=1")) {
-        window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(
-          currentUrl + "?openExternalBrowser=1"
+        const url = new URL(currentUrl);
+        url.searchParams.set("openExternalBrowser", "1");
+        window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(url.toString()
         )}`;
       }
     }
@@ -829,7 +830,7 @@ export function AuthCard() {
               </motion.div>
 
               {/* ── Banner เมื่ออยู่ใน LINE WebView ── */}
-              {isLineWebView && (
+              {/* {isLineWebView && (
                 <motion.div
                   custom={2.5}
                   variants={fadeUp}
@@ -855,7 +856,7 @@ export function AuthCard() {
                     กรุณาเข้าสู่ระบบด้วย LINE
                   </p>
                 </motion.div>
-              )}
+              )} */}
 
               <motion.div
                 custom={3}

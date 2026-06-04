@@ -16,9 +16,9 @@ export const authOptions = {
 
       options: {
         httpOnly: true,
-        sameSite: "none",
+        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production" ,
       },
     },
   },
