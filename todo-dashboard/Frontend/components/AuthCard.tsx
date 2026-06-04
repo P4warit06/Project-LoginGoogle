@@ -125,27 +125,27 @@ export function AuthCard() {
       if (!currentUrl.includes("openExternalBrowser=1")) {
         const url = new URL(currentUrl);
         url.searchParams.set("openExternalBrowser", "1");
-        window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(url.toString()
+        window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(
+          url.toString()
         )}`;
       }
     }
     const params = new URLSearchParams(window.location.search);
-   const err = params.get("error");
-   if (err) {
-     const errorMap: Record<string, string> = {
-       OAuthCallback: "OAuthCallback — Callback URL ไม่ตรง หรือ Secret ผิด",
-       OAuthSignin: "OAuthSignin — Client ID / Secret ไม่ถูกต้อง",
-       Callback: "Callback — NEXTAUTH_URL ผิด หรือ Secret หาย",
-       OAuthAccountNotLinked: "อีเมลนี้เชื่อมกับ provider อื่นอยู่แล้ว",
-       AccessDenied: "ผู้ใช้กด Cancel / ปฏิเสธการอนุญาต",
-       Configuration: "Configuration — ตรวจสอบ env vars ทั้งหมด",
-     };
-     setError(errorMap[err] ?? `Error: ${err}`); // แสดง code จริงถ้าไม่อยู่ใน map
-     window.history.replaceState({}, "", window.location.pathname);
-     setTimeout(() => setError(null), 8000);
-   }
+    const err = params.get("error");
+    if (err) {
+      const errorMap: Record<string, string> = {
+        OAuthCallback: "OAuthCallback — Callback URL ไม่ตรง หรือ Secret ผิด",
+        OAuthSignin: "OAuthSignin — Client ID / Secret ไม่ถูกต้อง",
+        Callback: "Callback — NEXTAUTH_URL ผิด หรือ Secret หาย",
+        OAuthAccountNotLinked: "อีเมลนี้เชื่อมกับ provider อื่นอยู่แล้ว",
+        AccessDenied: "ผู้ใช้กด Cancel / ปฏิเสธการอนุญาต",
+        Configuration: "Configuration — ตรวจสอบ env vars ทั้งหมด",
+      };
+      setError(errorMap[err] ?? `Error: ${err}`); // แสดง code จริงถ้าไม่อยู่ใน map
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setError(null), 8000);
+    }
   }, []);
-  
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
@@ -836,36 +836,6 @@ export function AuthCard() {
                   text="Smart prioritization for peak focus"
                 />
               </motion.div>
-
-              {/* ── Banner เมื่ออยู่ใน LINE WebView ── */}
-              {/* {isLineWebView && (
-                <motion.div
-                  custom={2.5}
-                  variants={fadeUp}
-                  initial="hidden"
-                  animate="show"
-                  style={{
-                    marginBottom: "1rem",
-                    padding: "12px 16px",
-                    borderRadius: 12,
-                    background: "rgba(6,199,85,0.1)",
-                    border: "1px solid rgba(6,199,85,0.25)",
-                    textAlign: "center",
-                  }}
-                >
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 13,
-                      color: "#4ade80",
-                      fontWeight: 500,
-                    }}
-                  >
-                    กรุณาเข้าสู่ระบบด้วย LINE
-                  </p>
-                </motion.div>
-              )} */}
-
               <motion.div
                 custom={3}
                 variants={fadeUp}
