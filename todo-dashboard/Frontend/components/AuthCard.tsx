@@ -875,7 +875,6 @@ export function AuthCard() {
                 />
               </motion.div>
 
-              {/* Google — ซ่อนใน LINE WebView */}
               {!isLineWebView && (
                 <>
                   <motion.div
