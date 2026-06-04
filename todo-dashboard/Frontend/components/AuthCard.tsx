@@ -136,6 +136,7 @@ export function AuthCard() {
       setTimeout(() => setError(null), 5000);
     }
   }, []);
+  
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);

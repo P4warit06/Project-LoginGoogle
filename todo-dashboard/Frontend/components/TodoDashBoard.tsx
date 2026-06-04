@@ -95,7 +95,7 @@ export default function TodoDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message }),
         });
-        if (res.ok && !silent) toast.success("📩 ส่ง LINE แล้ว!");
+        if (res.ok && !silent) toast.success("📩 ส่ง LINE แล้ว");
         if (!res.ok && !silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
         return res.ok;
       } catch {
@@ -156,7 +156,8 @@ export default function TodoDashboard() {
     const pri = priority.toUpperCase();
     const due = dueDate ? ` | Due: ${dueDate}` : "";
     sendLineMessage(
-      `➕ ${name} เพิ่ม Task ใหม่:\n📌 ${input.trim()}\n🏷️ Priority: ${pri}${due}`,
+      `! ${name} ได้มีการเพิ่ม Task ใหม่ลงในแดชบอร์ด:\n 📌 ${input.trim()}\n 🏷️ Priority: ${pri}${due}
+      💡 อย่าลืมเข้าไปตรวจสอบและอัปเดตความคืบหน้าน้า ✨`,
       true
     );
     toast.success("Task added ✨");
@@ -165,10 +166,10 @@ export default function TodoDashboard() {
   const deleteTodo = (id: number) => {
     const target = todos.find((t) => t.id === id);
     setTodos((p) => p.filter((t) => t.id !== id));
-    toast.error("Task deleted");
+    toast.error("Task has been deleted");
     if (target) {
       const name = session?.user?.name ?? "Someone";
-      sendLineMessage(`🗑️ ${name} ลบ Task:\n"${target.text}"`, true);
+      sendLineMessage(`! ${name} ได้มีการลบ Task:\n"${target.text}"`, true);
     }
   };
 
@@ -187,11 +188,14 @@ export default function TodoDashboard() {
     );
 
     if (target?.completed) {
-      toast("Task marked active 🔄");
+      toast("Task has marked active 🔄");
     } else {
       toast.success("Task completed 🎉");
       const name = session?.user?.name ?? "Someone";
-      sendLineMessage(`✅ ${name} เสร็จงาน:\n${target?.text ?? ""}`, true);
+      sendLineMessage(
+        `! ${name} เคลียร์ภาระงาน:\n${target?.text ?? ""} เรียบร้อยแล้ว`,
+        true
+      );
     }
   };
 
@@ -233,13 +237,13 @@ export default function TodoDashboard() {
     const name = session?.user?.name ?? "Someone";
     if (target && target.text !== editingText.trim()) {
       sendLineMessage(
-        `✏️ ${name} แก้ไข Task:\nเดิม: "${
+        `✏️ ${name} ได้มีการอัพเดท Task:\nเดิม: "${
           target.text
         }"\nใหม่: "${editingText.trim()}"`,
         true
       );
     }
-    toast.success("Task updated ✨");
+    toast.success("Task have been updated ✨");
   };
 
   const clearDone = () => {
@@ -253,8 +257,6 @@ export default function TodoDashboard() {
     );
     toast.success(`Cleared ${doneCount} completed tasks`);
   };
-
-  /* ───────────────── FILTER ───────────────── */
 
   const filtered = useMemo(() => {
     let r = todos;
@@ -459,7 +461,7 @@ export default function TodoDashboard() {
                     let msg = `📋 Todo Summary\n${
                       session?.user?.name ?? "User"
                     }\n`;
-                    msg += `✅ Done: ${done}  |  🔲 Left: ${remaining}\n`;
+                    msg += ` Done: ${done}  |  🔲 Left: ${remaining}\n`;
                     if (overdue.length > 0) {
                       msg += `\n⚠️ Overdue (${overdue.length}):\n`;
                       overdue.forEach((t) => {
@@ -467,7 +469,7 @@ export default function TodoDashboard() {
                       });
                     }
                     if (dueToday.length > 0) {
-                      msg += `\n🔔 Due Today (${dueToday.length}):\n`;
+                      msg += `\n Due Today (${dueToday.length}):\n`;
                       dueToday.forEach((t) => {
                         msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
                       });
@@ -691,7 +693,7 @@ export default function TodoDashboard() {
                 border: "none",
                 outline: "none",
                 color: "#fff",
-                fontSize: 16, // 16px ป้องกัน iOS zoom เมื่อ focus
+                fontSize: 16, 
                 WebkitAppearance: "none",
               }}
             />
@@ -742,7 +744,7 @@ export default function TodoDashboard() {
                 borderRadius: 10,
                 padding: "10px 12px",
                 color: "rgba(255,255,255,0.7)",
-                fontSize: 16, // 16px ป้องกัน iOS zoom
+                fontSize: 16, 
                 outline: "none",
                 colorScheme: "dark",
                 width: "100%",
@@ -910,7 +912,7 @@ export default function TodoDashboard() {
                             : "rgba(255,255,255,0.28)",
                           fontSize: 24,
                           flexShrink: 0,
-                          touchAction: "manipulation", // ป้องกัน double-tap zoom
+                          touchAction: "manipulation", 
                           WebkitTapHighlightColor: "transparent",
                         }}
                       >
@@ -1105,7 +1107,6 @@ export default function TodoDashboard() {
   );
 }
 
-/* ───────────────── COMPONENTS ───────────────── */
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
