@@ -40,7 +40,7 @@ export const authOptions: NextAuthOptions = {
       id: "line",
       name: "LINE",
       type: "oauth",
-      version: "2.0",
+     
 
       authorization: {
         url: "https://access.line.me/oauth2/v2.1/authorize",
