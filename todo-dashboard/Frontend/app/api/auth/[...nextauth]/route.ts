@@ -4,7 +4,7 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 
 export const authOptions = {
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const ,
   },
 
   cookies: {
