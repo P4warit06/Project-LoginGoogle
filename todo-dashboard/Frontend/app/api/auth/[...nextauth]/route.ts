@@ -40,7 +40,6 @@ export const authOptions: NextAuthOptions = {
       id: "line",
       name: "LINE",
       type: "oauth",
-     
 
       authorization: {
         url: "https://access.line.me/oauth2/v2.1/authorize",
@@ -68,24 +67,27 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
       if (account) {
         token.provider = account.provider;
       }
 
-      if (profile && "pictureUrl" in profile) {
-        // ใช้ type assertion เพราะรู้ว่า pictureUrl เป็น string
-        token.picture = (profile as any).pictureUrl;
+      if (user?.image) {
+        token.picture = user.image;
+      }
+
+      if (profile) {
+        if ("pictureUrl" in profile)
+          token.picture = (profile as any).pictureUrl; // LINE
+        if ("picture" in profile) token.picture = (profile as any).picture; // Google
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      if (token.picture && typeof token.picture === "string") {
-        if (session.user) {
-          session.user.image = token.picture;
-        }
+      if (session.user) {
+        session.user.image = (token.picture as string) ?? null;
       }
       return session;
     },

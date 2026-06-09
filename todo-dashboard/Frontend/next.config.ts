@@ -5,21 +5,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com", 
-        port: "",
-        pathname: "/**",
+        hostname: "profile.line-scdn.net",
       },
       {
         protocol: "https",
-        hostname: "*.microsoft.com", // Microsoft profile photo
-        port: "",
-        pathname: "/**",
+        hostname: "lh3.googleusercontent.com",
       },
       {
         protocol: "https",
-        hostname: "*.googleusercontent.com", // Google (wildcard)
-        port: "",
-        pathname: "/**",
+        hostname: "*.googleusercontent.com", 
+      },
+      {
+        protocol: "https",
+        hostname: "graph.microsoft.com", 
       },
     ],
   },
@@ -29,18 +27,14 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
-          // HTTPS strict — บังคับ browser ใช้ HTTPS ตลอด 2 ปี
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          // ป้องกัน MIME sniffing
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
-          // SAMEORIGIN = LINE LIFF เปิดใน iframe ได้
-          // ห้ามใช้ DENY เด็ดขาด จะทำให้ LIFF โหลดไม่ขึ้น
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
