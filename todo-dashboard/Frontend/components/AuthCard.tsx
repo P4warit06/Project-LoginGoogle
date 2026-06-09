@@ -108,6 +108,11 @@ const PRI_BG = {
   low: "rgba(74,222,128,0.12)",
 } as const;
 
+const providerIcon: Record<string, React.ReactNode> = {
+  google: <FcGoogle style={{ fontSize: 13 }} />,
+  "azure-ad": <FaMicrosoft style={{ fontSize: 13, color: "#60a5fa" }} />,
+  line: <SiLine style={{ fontSize: 13, color: "#06c755" }} />,
+};
 /* ════════════════════════════════════ */
 export function AuthCard() {
   const { data: session, status } = useSession();
@@ -157,7 +162,13 @@ export function AuthCard() {
     setSigningOut(true);
     await signOut({ callbackUrl: "/" });
   };
-
+  const providerLabel: Record<string, string> = {
+    google: "Google",
+    "azure-ad": "Microsoft",
+    line: "LINE",
+  };
+  const provider = (session?.user as any)?.provider ?? "";
+  const label = providerLabel[provider] ?? provider;
   const mobileStyles = `
     .auth-modal-overlay {
       position: fixed !important;
@@ -219,7 +230,6 @@ export function AuthCard() {
     <>
       <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
 
-      {/* แสดง error ถ้ามี */}
       {error && (
         <div
           style={{
@@ -250,14 +260,18 @@ export function AuthCard() {
             exit="exit"
             style={{ width: "100%" }}
           >
-            {/* ... ส่วน logged in เหมือนเดิม ... */}
             <div style={cardStyle}>
               <motion.div
                 custom={0}
                 variants={fadeUp}
                 initial="hidden"
                 animate="show"
-                style={{ marginBottom: "1.75rem" }}
+                style={{
+                  marginBottom: "1.75rem",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
               >
                 <span
                   style={{
@@ -276,8 +290,27 @@ export function AuthCard() {
                 >
                   <RiShieldCheckLine /> Focus Mode Active
                 </span>
+                {label && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "4px 12px",
+                      borderRadius: 999,
+                      background: "rgba(99,102,241,0.1)",
+                      border: "1px solid rgba(99,102,241,0.2)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#818cf8",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {providerIcon[provider]}
+                    Signed in with {label}
+                  </span>
+                )}
               </motion.div>
-
               <motion.div
                 custom={1}
                 variants={fadeUp}

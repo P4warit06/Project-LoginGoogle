@@ -88,6 +88,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.image = (token.picture as string) ?? null;
+        (session.user as any).provider = token.provider; 
       }
       return session;
     },
