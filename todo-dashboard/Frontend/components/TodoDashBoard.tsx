@@ -156,8 +156,8 @@ export default function TodoDashboard() {
     const pri = priority.toUpperCase();
     const due = dueDate ? ` | Due: ${dueDate}` : "";
     sendLineMessage(
-      `! ${name} ได้มีการเพิ่ม Task ใหม่ลงในแดชบอร์ด:\n 📌 ${input.trim()}\n 🏷️ Priority: ${pri}${due}
-      💡 อย่าลืมเข้าไปตรวจสอบและอัปเดตความคืบหน้าน้า ✨`,
+      `คุณ ${name} ได้มีการเพิ่ม Task ใหม่ลงในแดชบอร์ด:\n  ${input.trim()}\n  Priority: ${pri}${due}
+       Don't forget to check back and update us on your progress`,
       true
     );
     toast.success("Task added ✨");
@@ -169,7 +169,7 @@ export default function TodoDashboard() {
     toast.error("Task has been deleted");
     if (target) {
       const name = session?.user?.name ?? "Someone";
-      sendLineMessage(`! ${name} ได้มีการลบ Task:\n"${target.text}"`, true);
+      sendLineMessage(`คุณ ${name} ได้มีการลบ Task:\n"${target.text}"`, true);
     }
   };
 
@@ -188,12 +188,12 @@ export default function TodoDashboard() {
     );
 
     if (target?.completed) {
-      toast("Task has marked active 🔄");
+      toast("Task has marked to active");
     } else {
-      toast.success("Task completed 🎉");
+      toast.success("Task has been completed");
       const name = session?.user?.name ?? "Someone";
       sendLineMessage(
-        `! ${name} เคลียร์ภาระงาน:\n${target?.text ?? ""} เรียบร้อยแล้ว`,
+        `คุณ ${name} เคลียร์ภาระงาน:\n${target?.text ?? ""} เรียบร้อยแล้ว`,
         true
       );
     }
@@ -237,13 +237,13 @@ export default function TodoDashboard() {
     const name = session?.user?.name ?? "Someone";
     if (target && target.text !== editingText.trim()) {
       sendLineMessage(
-        `✏️ ${name} ได้มีการอัพเดท Task:\nเดิม: "${
+        `คุณ ${name} ได้อัพเดท Task:\n จาก เดิม: ->"${
           target.text
         }"\nใหม่: "${editingText.trim()}"`,
         true
       );
     }
-    toast.success("Task have been updated ✨");
+    toast.success("Task have been updated");
   };
 
   const clearDone = () => {
@@ -252,7 +252,7 @@ export default function TodoDashboard() {
     setTodos((p) => p.filter((t) => !t.completed));
     const name = session?.user?.name ?? "Someone";
     sendLineMessage(
-      `🧹 ${name} ล้าง Task ที่เสร็จแล้ว ${doneCount} รายการ`,
+      ` ${name} เคลียร์ Task ที่เสร็จแล้วจำนวน ${doneCount} รายการ`,
       true
     );
     toast.success(`Cleared ${doneCount} completed tasks`);
@@ -290,8 +290,6 @@ export default function TodoDashboard() {
   const progress =
     todos.length === 0 ? 0 : Math.round((doneCount / todos.length) * 100);
 
-  /* ───────────────── STORAGE ───────────────── */
-
   useEffect(() => {
     const savedTodos = localStorage.getItem("todo-dashboard");
 
@@ -311,7 +309,6 @@ export default function TodoDashboard() {
     localStorage.setItem("todo-dashboard", JSON.stringify(todos));
   }, [todos]);
 
-  /* ───────────────── RENDER ───────────────── */
 
   const todoMobileStyles = `
     @media (max-width: 480px) {
