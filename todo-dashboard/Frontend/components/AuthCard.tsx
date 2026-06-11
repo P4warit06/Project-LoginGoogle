@@ -132,6 +132,7 @@ export function AuthCard() {
       if (!currentUrl.includes("openExternalBrowser=1")) {
         const url = new URL(currentUrl);
         url.searchParams.set("openExternalBrowser", "1");
+        url.searchParams.set("from", "line"); // ← ส่งสัญญาณว่ามาจาก LINE
         window.location.href = `https://line.me/R/openExternalBrowser?url=${encodeURIComponent(
           url.toString()
         )}`;
@@ -155,13 +156,15 @@ export function AuthCard() {
   }, []);
 
   useEffect(() => {
-    if (!isReady) return;
-    if (!isLiff) return; // ไม่ได้อยู่ใน LINE → ไม่ทำอะไร
-    if (status === "authenticated") return; // login แล้ว → ไม่ทำอะไร
+    if (status !== "unauthenticated") return; // loading หรือ logged-in → ข้าม
 
-    // อยู่ใน LINE + ยังไม่ได้ login → sign in ด้วย LINE ทันที
-    signIn("line");
-  }, [isReady, isLiff, status]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("from") === "line") {
+      // ลบ param ออกจาก URL แล้ว auto sign-in ทันที
+      window.history.replaceState({}, "", window.location.pathname);
+      signIn("line");
+    }
+  }, [status]);
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
@@ -251,7 +254,6 @@ export function AuthCard() {
       </div>
     );
   }
-  
 
   return (
     <>
