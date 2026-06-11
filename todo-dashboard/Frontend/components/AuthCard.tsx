@@ -17,6 +17,7 @@ import { HiSparkles } from "react-icons/hi2";
 import { useState, useEffect } from "react";
 import { FaMicrosoft } from "react-icons/fa";
 import { SiLine } from "react-icons/si";
+import { useLiff } from "@/hooks/useLiff";
 
 /* ── Animation variants ── */
 const fadeUp = {
@@ -121,6 +122,7 @@ export function AuthCard() {
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLineWebView, setIsLineWebView] = useState(false);
+  const { isLiff, isReady, isLoggedIn, profile } = useLiff();
 
   useEffect(() => {
     const lineUA = /Line\//.test(navigator.userAgent);
@@ -151,6 +153,15 @@ export function AuthCard() {
       setTimeout(() => setError(null), 8000);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+    if (!isLiff) return; // ไม่ได้อยู่ใน LINE → ไม่ทำอะไร
+    if (status === "authenticated") return; // login แล้ว → ไม่ทำอะไร
+
+    // อยู่ใน LINE + ยังไม่ได้ login → sign in ด้วย LINE ทันที
+    signIn("line");
+  }, [isReady, isLiff, status]);
 
   const handleSignIn = async (provider: string) => {
     setSigningIn(true);
@@ -198,8 +209,23 @@ export function AuthCard() {
         padding-bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
       }
     }
-  `;
-
+  // `;
+  // if (!isReady || (isLiff && status === "loading")) {
+  //   return (
+  //     <div
+  //       style={{
+  //         display: "flex",
+  //         alignItems: "center",
+  //         justifyContent: "center",
+  //         height: "100vh",
+  //         color: "#a78bfa",
+  //         fontSize: 14,
+  //       }}
+  //     >
+  //       กำลังเชื่อมต่อ LINE...
+  //     </div>
+  //   );
+  // }
   if (status === "loading") {
     return (
       <div
@@ -225,6 +251,7 @@ export function AuthCard() {
       </div>
     );
   }
+  
 
   return (
     <>
