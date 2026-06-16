@@ -55,10 +55,10 @@ function buildNewTaskBubble(task: NewTaskInfo) {
       contents: [
         {
           type: "text",
-          text: "📌 NEW TASK",
+          text: "! NEW TASK !",
           weight: "bold",
-          color: "#1DB446",
-          size: "sm"
+          color: "#2A164F",
+          size: "sm",
         },
         {
           type: "text",
@@ -66,18 +66,18 @@ function buildNewTaskBubble(task: NewTaskInfo) {
           weight: "bold",
           size: "xxl",
           margin: "md",
-          wrap: true
+          wrap: true,
         },
         {
           type: "text",
-          text: `${badge.emoji} Priority: ${badge.label}`,
+          text: `Priority: ${badge.label}`,
           size: "xs",
           color: "#aaaaaa",
-          wrap: true
+          wrap: true,
         },
         {
           type: "separator",
-          margin: "xxl"
+          margin: "xxl",
         },
         {
           type: "box",
@@ -94,20 +94,22 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                   text: "Due Date",
                   size: "sm",
                   color: "#555555",
-                  flex: 0
+                  flex: 0,
                 },
                 {
                   type: "text",
-                  text: task.dueDate ? new Date(task.dueDate).toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  }) : "Not specified",
+                  text: task.dueDate
+                    ? new Date(task.dueDate).toLocaleDateString("th-TH", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Not specified",
                   size: "sm",
                   color: "#111111",
-                  align: "end"
-                }
-              ]
+                  align: "end",
+                },
+              ],
             },
             {
               type: "box",
@@ -118,20 +120,20 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                   text: "Created By",
                   size: "sm",
                   color: "#555555",
-                  flex: 0
+                  flex: 0,
                 },
                 {
                   type: "text",
                   text: task.createdBy ?? "System",
                   size: "sm",
                   color: "#111111",
-                  align: "end"
-                }
-              ]
+                  align: "end",
+                },
+              ],
             },
             {
               type: "separator",
-              margin: "xxl"
+              margin: "xxl",
             },
             {
               type: "box",
@@ -142,22 +144,22 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                   type: "text",
                   text: "STATUS",
                   size: "sm",
-                  color: "#555555"
+                  color: "#555555",
                 },
                 {
                   type: "text",
                   text: "Pending",
                   size: "sm",
                   color: "#111111",
-                  align: "end"
-                }
-              ]
-            }
-          ]
+                  align: "end",
+                },
+              ],
+            },
+          ],
         },
         {
           type: "separator",
-          margin: "xxl"
+          margin: "xxl",
         },
         {
           type: "box",
@@ -169,16 +171,16 @@ function buildNewTaskBubble(task: NewTaskInfo) {
               text: "TASK ID",
               size: "xs",
               color: "#aaaaaa",
-              flex: 0
+              flex: 0,
             },
             {
               type: "text",
               text: `#${Date.now().toString().slice(-8)}`,
               color: "#aaaaaa",
               size: "xs",
-              align: "end"
-            }
-          ]
+              align: "end",
+            },
+          ],
         },
         {
           type: "box",
@@ -189,12 +191,12 @@ function buildNewTaskBubble(task: NewTaskInfo) {
             {
               type: "button",
               style: "primary",
-              color: "#16A34A",
+              color: "#B388FF",
               action: {
                 type: "uri",
                 label: "View Details",
                 uri: "https://googlelogin-pwratmosph.vercel.app",
-              }
+              },
             },
             {
               type: "button",
@@ -203,21 +205,19 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                 type: "uri",
                 label: "Edit Task",
                 uri: "https://googlelogin-pwratmosph.vercel.app",
-              }
-            }
-          ]
-        }
-      ]
+              },
+            },
+          ],
+        },
+      ],
     },
     styles: {
       footer: {
-        separator: true
-      }
-    }
+        separator: true,
+      },
+    },
   };
 }
-
-/* ────Task Carousel (สรุปงานทั้งหมด)─── */
 
 /* ────Task Carousel (สรุปงานทั้งหมด)─── */
 
@@ -226,7 +226,7 @@ function buildTaskBubble(task: Task) {
 
   let headerColor = "#27ACB2";
   let headerText = "In Progress";
-  let progress = 70;
+  let progress = 50;
 
   if (task.status === "done") {
     headerColor = "#A17DF5";
@@ -325,9 +325,9 @@ function buildTaskBubble(task: Task) {
 
 function getProgressColor(headerColor: string): string {
   const colorMap: Record<string, string> = {
-    "#27ACB2": "#0D8186",   
-    "#A17DF5": "#7D51E4",     
-    "#FF6B6E": "#DE5658",     
+    "#1E40AF": "#EFF6FF", // In Progess
+    "#A17DF5": "#34D399", // Completed
+    "#FF6B6E": "#DE5658", //
   };
   return colorMap[headerColor] || "#0D8186";
 }
