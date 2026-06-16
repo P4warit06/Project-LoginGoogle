@@ -43,47 +43,77 @@ const PRIORITY_BADGE: Record<
   low: { emoji: "🟢", label: "LOW" },
 };
 
+const THEME = {
+  bg: "#08090F",
+  card: "#111827",
+  primary: "#6D4AFF",
+  secondary: "#8B5CF6",
+  success: "#00E5A8",
+  warning: "#FF8A3D",
+  danger: "#FF5E7A",
+  text: "#FFFFFF",
+  textSecondary: "#B4B4C7",
+  border: "#23243A",
+};
 /* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
 function buildNewTaskBubble(task: NewTaskInfo) {
   const badge = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium;
 
+  const priorityColor =
+    task.priority === "high"
+      ? THEME.danger
+      : task.priority === "medium"
+      ? THEME.warning
+      : THEME.success;
+
   return {
     type: "bubble",
+    styles: {
+      body: {
+        backgroundColor: THEME.bg,
+      },
+    },
     body: {
       type: "box",
       layout: "vertical",
+      backgroundColor: THEME.bg,
       contents: [
         {
           type: "text",
-          text: "! NEW TASK !",
+          text: "✨ NEW TASK",
           weight: "bold",
-          color: "#2A164F",
+          color: THEME.secondary,
           size: "sm",
         },
         {
           type: "text",
           text: task.name,
           weight: "bold",
+          color: THEME.text,
           size: "xxl",
           margin: "md",
           wrap: true,
         },
         {
           type: "text",
-          text: `Priority: ${badge.label}`,
+          text: `${badge.emoji} ${badge.label}`,
           size: "xs",
-          color: "#aaaaaa",
-          wrap: true,
+          color: priorityColor,
+          margin: "sm",
         },
         {
           type: "separator",
-          margin: "xxl",
+          margin: "xl",
+          color: THEME.border,
         },
         {
           type: "box",
           layout: "vertical",
-          margin: "xxl",
-          spacing: "sm",
+          backgroundColor: THEME.card,
+          cornerRadius: "12px",
+          paddingAll: "14px",
+          margin: "xl",
+          spacing: "md",
           contents: [
             {
               type: "box",
@@ -92,8 +122,8 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                 {
                   type: "text",
                   text: "Due Date",
+                  color: THEME.textSecondary,
                   size: "sm",
-                  color: "#555555",
                   flex: 0,
                 },
                 {
@@ -105,8 +135,8 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                         year: "numeric",
                       })
                     : "Not specified",
+                  color: THEME.text,
                   size: "sm",
-                  color: "#111111",
                   align: "end",
                 },
               ],
@@ -118,39 +148,35 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                 {
                   type: "text",
                   text: "Created By",
+                  color: THEME.textSecondary,
                   size: "sm",
-                  color: "#555555",
                   flex: 0,
                 },
                 {
                   type: "text",
                   text: task.createdBy ?? "System",
+                  color: THEME.text,
                   size: "sm",
-                  color: "#111111",
                   align: "end",
                 },
               ],
             },
             {
-              type: "separator",
-              margin: "xxl",
-            },
-            {
               type: "box",
               layout: "horizontal",
-              margin: "xxl",
               contents: [
                 {
                   type: "text",
-                  text: "STATUS",
+                  text: "Status",
+                  color: THEME.textSecondary,
                   size: "sm",
-                  color: "#555555",
+                  flex: 0,
                 },
                 {
                   type: "text",
                   text: "Pending",
+                  color: THEME.warning,
                   size: "sm",
-                  color: "#111111",
                   align: "end",
                 },
               ],
@@ -158,26 +184,22 @@ function buildNewTaskBubble(task: NewTaskInfo) {
           ],
         },
         {
-          type: "separator",
-          margin: "xxl",
-        },
-        {
           type: "box",
           layout: "horizontal",
-          margin: "md",
+          margin: "xl",
           contents: [
             {
               type: "text",
               text: "TASK ID",
               size: "xs",
-              color: "#aaaaaa",
+              color: THEME.textSecondary,
               flex: 0,
             },
             {
               type: "text",
               text: `#${Date.now().toString().slice(-8)}`,
-              color: "#aaaaaa",
               size: "xs",
+              color: THEME.textSecondary,
               align: "end",
             },
           ],
@@ -191,7 +213,7 @@ function buildNewTaskBubble(task: NewTaskInfo) {
             {
               type: "button",
               style: "primary",
-              color: "#B388FF",
+              color: THEME.primary,
               action: {
                 type: "uri",
                 label: "View Details",
@@ -200,7 +222,8 @@ function buildNewTaskBubble(task: NewTaskInfo) {
             },
             {
               type: "button",
-              style: "secondary",
+              style: "primary",
+              color: THEME.border,
               action: {
                 type: "uri",
                 label: "Edit Task",
@@ -211,11 +234,6 @@ function buildNewTaskBubble(task: NewTaskInfo) {
         },
       ],
     },
-    styles: {
-      footer: {
-        separator: true,
-      },
-    },
   };
 }
 
@@ -223,22 +241,21 @@ function buildNewTaskBubble(task: NewTaskInfo) {
 
 function buildTaskBubble(task: Task) {
   const due = getDueLabel(task.dueDate);
-
-  let headerColor = "#27ACB2";
+  let headerColor = THEME.primary;
   let headerText = "In Progress";
   let progress = 50;
 
   if (task.status === "done") {
-    headerColor = "#A17DF5";
+    headerColor = THEME.success;
     headerText = "Completed";
     progress = 100;
   } else if (due?.overdue) {
-    headerColor = "#FF6B6E";
+    headerColor = THEME.danger;
     headerText = "Overdue";
     progress = 100;
   } else if (due?.label === "Due today") {
-    headerColor = "#FF6B6E";
-    headerText = "Pending";
+    headerColor = THEME.warning;
+    headerText = "Due Today";
     progress = 80;
   }
 
@@ -259,7 +276,7 @@ function buildTaskBubble(task: Task) {
           color: "#ffffff",
           align: "start",
           size: "md",
-          gravity: "center"
+          gravity: "center",
         },
         {
           type: "text",
@@ -268,12 +285,12 @@ function buildTaskBubble(task: Task) {
           align: "start",
           size: "xs",
           gravity: "center",
-          margin: "lg"
+          margin: "lg",
         },
         {
           type: "box",
           layout: "vertical",
-          backgroundColor: "#9FD8E36E",
+         backgroundColor: "#23243A", 
           height: "6px",
           margin: "sm",
           contents: [
@@ -285,51 +302,47 @@ function buildTaskBubble(task: Task) {
               height: "6px",
               contents: [
                 {
-                  type: "filler"
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  type: "filler",
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     body: {
       type: "box",
       layout: "vertical",
+      backgroundColor: THEME.card,
       spacing: "md",
       paddingAll: "12px",
       contents: [
         {
-          type: "box",
-          layout: "horizontal",
-          flex: 1,
-          contents: [
-            {
-              type: "text",
-              text: task.name,
-              color: "#8C8C8C",
-              size: "sm",
-              wrap: true
-            }
-          ]
-        }
-      ]
+          type: "text",
+          text: task.name,
+          color: THEME.text,
+          size: "sm",
+          wrap: true,
+        },
+      ],
     },
     styles: {
       footer: {
-        separator: false
-      }
-    }
+        separator: false,
+      },
+    },
   };
 }
 
 function getProgressColor(headerColor: string): string {
   const colorMap: Record<string, string> = {
-    "#1E40AF": "#EFF6FF", // In Progess
-    "#A17DF5": "#34D399", // Completed
-    "#FF6B6E": "#DE5658", //
+    [THEME.primary]: "#C4B5FD",
+    [THEME.success]: "#D1FAE5",
+    [THEME.warning]: "#FED7AA",
+    [THEME.danger]: "#FFE4E6",
   };
-  return colorMap[headerColor] || "#0D8186";
+
+  return colorMap[headerColor] || "#C4B5FD";
 }
 
 function buildCarousel(tasks: Task[]) {
