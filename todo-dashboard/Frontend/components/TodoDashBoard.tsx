@@ -85,9 +85,12 @@ export default function TodoDashboard() {
   const [notifying, setNotifying] = useState(false);
   const notifiedRef = useRef<Set<number>>(new Set());
 
- 
-  const sendTaskCarousel = useCallback(
-    async (taskList: Todo[], silent = false) => {
+
+  const sendLineUpdate = useCallback(
+    async (
+      taskList: Todo[],
+      opts: { newTask?: Todo; silent?: boolean } = {}
+    ) => {
       setNotifying(true);
       try {
         const tasks = taskList.map((t) => ({
@@ -95,22 +98,42 @@ export default function TodoDashboard() {
           status: t.completed ? "done" : "todo",
           dueDate: t.dueDate,
         }));
+
+        const body: {
+          tasks: typeof tasks;
+          newTask?: {
+            name: string;
+            priority: Todo["priority"];
+            dueDate?: string;
+            createdBy?: string;
+          };
+        } = { tasks };
+
+        if (opts.newTask) {
+          body.newTask = {
+            name: opts.newTask.text,
+            priority: opts.newTask.priority,
+            dueDate: opts.newTask.dueDate,
+            createdBy: session?.user?.name ?? undefined,
+          };
+        }
+
         const res = await fetch("/api/notify-line", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tasks }),
+          body: JSON.stringify(body),
         });
-        if (res.ok && !silent) toast.success("📩 ส่ง LINE แล้ว");
-        if (!res.ok && !silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
+        if (res.ok && !opts.silent) toast.success("📩 ส่ง LINE แล้ว");
+        if (!res.ok && !opts.silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
         return res.ok;
       } catch {
-        if (!silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
+        if (!opts.silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
         return false;
       } finally {
         setNotifying(false);
       }
     },
-    []
+    [session]
   );
 
   /* ── Auto-notify overdue todos ── */
@@ -123,13 +146,13 @@ export default function TodoDashboard() {
           !notifiedRef.current.has(t.id)
       );
       if (overdue.length === 0) return;
-      sendTaskCarousel(todos, true);
+      sendLineUpdate(todos, { silent: true });
       overdue.forEach((t) => notifiedRef.current.add(t.id));
     };
     checkOverdue();
     const id = setInterval(checkOverdue, 60_000);
     return () => clearInterval(id);
-  }, [todos, sendTaskCarousel]);
+  }, [todos, sendLineUpdate]);
 
   /* ───────────────── CRUD ───────────────── */
 
@@ -153,7 +176,7 @@ export default function TodoDashboard() {
     setDueDate("");
     setPriority("medium");
 
-    sendTaskCarousel(updated, true);
+    sendLineUpdate(updated, { newTask: newTodo, silent: true });
     toast.success("Task added ✨");
   };
 
@@ -161,7 +184,7 @@ export default function TodoDashboard() {
     const updated = todos.filter((t) => t.id !== id);
     setTodos(updated);
     toast.error("Task has been deleted");
-    sendTaskCarousel(updated, true);
+    sendLineUpdate(updated, { silent: true });
   };
 
   const toggleTodo = (id: number) => {
@@ -177,7 +200,7 @@ export default function TodoDashboard() {
     } else {
       toast.success("Task has been completed");
     }
-    sendTaskCarousel(updated, true);
+    sendLineUpdate(updated, { silent: true });
   };
 
   const startEdit = (todo: Todo) => {
@@ -216,7 +239,7 @@ export default function TodoDashboard() {
     setTodos(updated);
 
     if (target && target.text !== editingText.trim()) {
-      sendTaskCarousel(updated, true);
+      sendLineUpdate(updated, { silent: true });
     }
     toast.success("Task have been updated");
   };
@@ -226,7 +249,7 @@ export default function TodoDashboard() {
     if (doneCount === 0) return;
     const updated = todos.filter((t) => !t.completed);
     setTodos(updated);
-    sendTaskCarousel(updated, true);
+    sendLineUpdate(updated, { silent: true });
     toast.success(`Cleared ${doneCount} completed tasks`);
   };
 
@@ -416,7 +439,7 @@ export default function TodoDashboard() {
               {todos.length > 0 && (
                 <motion.button
                   onClick={async () => {
-                    await sendTaskCarousel(todos);
+                    await sendLineUpdate(todos);
                   }}
                   disabled={notifying}
                   whileHover={{ scale: 1.04 }}
