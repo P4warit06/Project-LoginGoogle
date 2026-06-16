@@ -44,112 +44,177 @@ const PRIORITY_BADGE: Record<
 };
 
 /* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
+/* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
 function buildNewTaskBubble(task: NewTaskInfo) {
   const badge = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium;
 
   return {
     type: "bubble",
-    size: "mega",
-    hero: {
+    body: {
       type: "box",
       layout: "vertical",
       contents: [
         {
-          type: "image",
-          url: "https://images.unsplash.com/photo-1535957998253-26ae1ef29506?q=80&w=1036&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-          size: "full",
-          aspectMode: "cover",
-          aspectRatio: "20:13",
-          gravity: "center",
+          type: "text",
+          text: "📌 NEW TASK",
+          weight: "bold",
+          color: "#1DB446",
+          size: "sm"
+        },
+        {
+          type: "text",
+          text: task.name,
+          weight: "bold",
+          size: "xxl",
+          margin: "md",
+          wrap: true
+        },
+        {
+          type: "text",
+          text: `${badge.emoji} Priority: ${badge.label}`,
+          size: "xs",
+          color: "#aaaaaa",
+          wrap: true
+        },
+        {
+          type: "separator",
+          margin: "xxl"
         },
         {
           type: "box",
           layout: "vertical",
-          position: "absolute",
-          offsetBottom: "0px",
-          offsetStart: "0px",
-          offsetEnd: "0px",
-          backgroundColor: "#00000099",
-          paddingAll: "16px",
-          paddingTop: "40px",
+          margin: "xxl",
           spacing: "sm",
           contents: [
             {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: "Due Date",
+                  size: "sm",
+                  color: "#555555",
+                  flex: 0
+                },
+                {
+                  type: "text",
+                  text: task.dueDate ? new Date(task.dueDate).toLocaleDateString("th-TH", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  }) : "Not specified",
+                  size: "sm",
+                  color: "#111111",
+                  align: "end"
+                }
+              ]
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: "Created By",
+                  size: "sm",
+                  color: "#555555",
+                  flex: 0
+                },
+                {
+                  type: "text",
+                  text: task.createdBy ?? "System",
+                  size: "sm",
+                  color: "#111111",
+                  align: "end"
+                }
+              ]
+            },
+            {
+              type: "separator",
+              margin: "xxl"
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              margin: "xxl",
+              contents: [
+                {
+                  type: "text",
+                  text: "STATUS",
+                  size: "sm",
+                  color: "#555555"
+                },
+                {
+                  type: "text",
+                  text: "Pending",
+                  size: "sm",
+                  color: "#111111",
+                  align: "end"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          type: "separator",
+          margin: "xxl"
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          margin: "md",
+          contents: [
+            {
               type: "text",
-              text: `${badge.emoji} ${badge.label}`,
-              color: "#FFFFFF",
+              text: "TASK ID",
               size: "xs",
-              weight: "bold",
+              color: "#aaaaaa",
+              flex: 0
             },
             {
               type: "text",
-              text: task.name,
-              color: "#FFFFFF",
-              weight: "bold",
-              size: "xl",
-              wrap: true,
+              text: `#${Date.now().toString().slice(-8)}`,
+              color: "#aaaaaa",
+              size: "xs",
+              align: "end"
+            }
+          ]
+        },
+        {
+          type: "box",
+          layout: "horizontal",
+          spacing: "sm",
+          margin: "xl",
+          contents: [
+            {
+              type: "button",
+              style: "primary",
+              color: "#16A34A",
+              action: {
+                type: "uri",
+                label: "View Details",
+                uri: "https://googlelogin-pwratmosph.vercel.app",
+              }
             },
             {
-              type: "text",
-              text: formatThaiDueDate(task.dueDate),
-              color: "#FFFFFFCC",
-              size: "sm",
-            },
-          ],
-        },
-      ],
+              type: "button",
+              style: "secondary",
+              action: {
+                type: "uri",
+                label: "Edit Task",
+                uri: "https://googlelogin-pwratmosph.vercel.app",
+              }
+            }
+          ]
+        }
+      ]
     },
-    body: {
-      type: "box",
-      layout: "vertical",
-      paddingAll: "16px",
-      spacing: "sm",
-      contents: [
-        {
-          type: "text",
-          text: "แจ้งเตือนงานใหม่",
-          size: "xs",
-          color: "#9CA3AF",
-          weight: "bold",
-        },
-        {
-          type: "text",
-          text: `${
-            task.createdBy ?? "มีคน"
-          } ได้เพิ่มงานใหม่เข้าสู่ระบบ Todo Dashboard กรุณาตรวจสอบรายละเอียดและกำหนดเวลาดำเนินการ`,
-          size: "sm",
-          color: "#6B7280",
-          wrap: true,
-        },
-      ],
-    },
-    footer: {
-      type: "box",
-      layout: "horizontal",
-      spacing: "sm",
-      paddingAll: "12px",
-      contents: [
-        {
-          type: "button",
-          style: "primary",
-          color: "#16A34A",
-          action: {
-            type: "uri",
-            label: "ดูรายละเอียด",
-            uri: "https://googlelogin-pwratmosph.vercel.app",
-          },
-        },
-        {
-          type: "button",
-          style: "secondary",
-          action: {
-            type: "uri",
-            label: "แก้ไขงาน",
-            uri: "https://googlelogin-pwratmosph.vercel.app",
-          },
-        },
-      ],
-    },
+    styles: {
+      footer: {
+        separator: true
+      }
+    }
   };
 }
 
