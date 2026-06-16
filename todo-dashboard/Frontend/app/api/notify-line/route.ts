@@ -44,7 +44,6 @@ const PRIORITY_BADGE: Record<
 };
 
 /* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
-/* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
 function buildNewTaskBubble(task: NewTaskInfo) {
   const badge = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium;
 
@@ -220,103 +219,117 @@ function buildNewTaskBubble(task: NewTaskInfo) {
 
 /* ────Task Carousel (สรุปงานทั้งหมด)─── */
 
+/* ────Task Carousel (สรุปงานทั้งหมด)─── */
+
 function buildTaskBubble(task: Task) {
   const due = getDueLabel(task.dueDate);
 
-  let headerColor = "#2563EB";
-  let headerText = "IN PROGRESS";
-  let progress = 40;
+  let headerColor = "#27ACB2";
+  let headerText = "In Progress";
+  let progress = 70;
 
   if (task.status === "done") {
-    headerColor = "#1A8241";
-    headerText = "COMPLETED";
+    headerColor = "#A17DF5";
+    headerText = "Completed";
     progress = 100;
   } else if (due?.overdue) {
-    headerColor = "#E84D4D";
-    headerText = "OVERDUE";
+    headerColor = "#FF6B6E";
+    headerText = "Overdue";
     progress = 100;
   } else if (due?.label === "Due today") {
-    headerColor = "#CCA210";
-    headerText = "PENDING";
+    headerColor = "#FF6B6E";
+    headerText = "Pending";
     progress = 80;
   }
 
   return {
     type: "bubble",
-    size: "kilo",
+    size: "nano",
     header: {
       type: "box",
       layout: "vertical",
       backgroundColor: headerColor,
-      paddingAll: "16px",
+      paddingTop: "19px",
+      paddingAll: "12px",
+      paddingBottom: "16px",
       contents: [
         {
           type: "text",
           text: headerText,
-          color: "#FFFFFF",
-          weight: "bold",
-          size: "sm",
-        },
-      ],
-    },
-    body: {
-      type: "box",
-      layout: "vertical",
-      paddingAll: "16px",
-      spacing: "md",
-      contents: [
-        {
-          type: "text",
-          text: task.name,
-          weight: "bold",
-          size: "lg",
-          wrap: true,
+          color: "#ffffff",
+          align: "start",
+          size: "md",
+          gravity: "center"
         },
         {
           type: "text",
-          text: due ? `Due: ${due.label}` : "No due date",
-          size: "sm",
-          color: "#666666",
+          text: `${progress}%`,
+          color: "#ffffff",
+          align: "start",
+          size: "xs",
+          gravity: "center",
+          margin: "lg"
         },
         {
           type: "box",
           layout: "vertical",
-          backgroundColor: "#E5E7EB",
+          backgroundColor: "#9FD8E36E",
           height: "6px",
-          cornerRadius: "999px",
-          margin: "md",
+          margin: "sm",
           contents: [
             {
               type: "box",
               layout: "vertical",
-              backgroundColor: headerColor,
-              height: "6px",
               width: `${progress}%`,
-              cornerRadius: "999px",
-              contents: [],
-            },
-          ],
-        },
-      ],
+              backgroundColor: getProgressColor(headerColor),
+              height: "6px",
+              contents: [
+                {
+                  type: "filler"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
-    footer: {
+    body: {
       type: "box",
       layout: "vertical",
+      spacing: "md",
       paddingAll: "12px",
       contents: [
         {
-          type: "button",
-          style: "primary",
-          color: headerColor,
-          action: {
-            type: "message",
-            label: "View Details",
-            text: `ดูรายละเอียด: ${task.name}`,
-          },
-        },
-      ],
+          type: "box",
+          layout: "horizontal",
+          flex: 1,
+          contents: [
+            {
+              type: "text",
+              text: task.name,
+              color: "#8C8C8C",
+              size: "sm",
+              wrap: true
+            }
+          ]
+        }
+      ]
     },
+    styles: {
+      footer: {
+        separator: false
+      }
+    }
   };
+}
+
+function getProgressColor(headerColor: string): string {
+  const colorMap: Record<string, string> = {
+    "#27ACB2": "#0D8186",   
+    "#A17DF5": "#7D51E4",     
+    "#FF6B6E": "#DE5658",     
+  };
+  return colorMap[headerColor] || "#0D8186";
 }
 
 function buildCarousel(tasks: Task[]) {
