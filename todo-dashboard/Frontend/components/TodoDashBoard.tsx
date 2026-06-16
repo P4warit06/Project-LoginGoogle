@@ -85,15 +85,20 @@ export default function TodoDashboard() {
   const [notifying, setNotifying] = useState(false);
   const notifiedRef = useRef<Set<number>>(new Set());
 
-  /* ── LINE Messaging API helper ── */
-  const sendLineMessage = useCallback(
-    async (message: string, silent = false) => {
+ 
+  const sendTaskCarousel = useCallback(
+    async (taskList: Todo[], silent = false) => {
       setNotifying(true);
       try {
+        const tasks = taskList.map((t) => ({
+          name: t.text,
+          status: t.completed ? "done" : "todo",
+          dueDate: t.dueDate,
+        }));
         const res = await fetch("/api/notify-line", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ tasks }),
         });
         if (res.ok && !silent) toast.success("📩 ส่ง LINE แล้ว");
         if (!res.ok && !silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
@@ -118,85 +123,61 @@ export default function TodoDashboard() {
           !notifiedRef.current.has(t.id)
       );
       if (overdue.length === 0) return;
-      const lines = overdue
-        .map((t) => `  • [${t.priority.toUpperCase()}] ${t.text}`)
-        .join("\n");
-      const msg = `⚠️ Todo เกินกำหนด ${overdue.length} รายการ:\n${lines}`;
-      sendLineMessage(msg, true);
+      sendTaskCarousel(todos, true);
       overdue.forEach((t) => notifiedRef.current.add(t.id));
     };
     checkOverdue();
     const id = setInterval(checkOverdue, 60_000);
     return () => clearInterval(id);
-  }, [todos, sendLineMessage]);
+  }, [todos, sendTaskCarousel]);
 
   /* ───────────────── CRUD ───────────────── */
 
   const addTodo = () => {
     if (!input.trim()) return;
 
-    setTodos((p) => [
-      {
-        id: Date.now(),
-        text: input.trim(),
-        completed: false,
-        createdAt: new Date(),
-        priority,
-        dueDate: dueDate || undefined,
-        isEditing: false,
-      },
-      ...p,
-    ]);
+    const newTodo: Todo = {
+      id: Date.now(),
+      text: input.trim(),
+      completed: false,
+      createdAt: new Date(),
+      priority,
+      dueDate: dueDate || undefined,
+      isEditing: false,
+    };
+
+    const updated = [newTodo, ...todos];
+    setTodos(updated);
 
     setInput("");
     setDueDate("");
     setPriority("medium");
 
-    const name = session?.user?.name ?? "Someone";
-    const pri = priority.toUpperCase();
-    const due = dueDate ? ` | Due: ${dueDate}` : "";
-    sendLineMessage(
-      `คุณ ${name} ได้มีการเพิ่ม Task ใหม่ลงในแดชบอร์ด:\n  ${input.trim()}\n  Priority: ${pri}${due}
-       Don't forget to check back and update us on your progress`,
-      true
-    );
+    sendTaskCarousel(updated, true);
     toast.success("Task added ✨");
   };
 
   const deleteTodo = (id: number) => {
-    const target = todos.find((t) => t.id === id);
-    setTodos((p) => p.filter((t) => t.id !== id));
+    const updated = todos.filter((t) => t.id !== id);
+    setTodos(updated);
     toast.error("Task has been deleted");
-    if (target) {
-      const name = session?.user?.name ?? "Someone";
-      sendLineMessage(`คุณ ${name} ได้มีการลบ Task:\n"${target.text}"`, true);
-    }
+    sendTaskCarousel(updated, true);
   };
 
   const toggleTodo = (id: number) => {
     const target = todos.find((todo) => todo.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id
-          ? {
-              ...todo,
-              completed: !todo.completed,
-            }
-          : todo
-      )
+    const updated = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
     );
+    setTodos(updated);
 
     if (target?.completed) {
       toast("Task has marked to active");
     } else {
       toast.success("Task has been completed");
-      const name = session?.user?.name ?? "Someone";
-      sendLineMessage(
-        `คุณ ${name} เคลียร์ภาระงาน:\n${target?.text ?? ""} เรียบร้อยแล้ว`,
-        true
-      );
     }
+    sendTaskCarousel(updated, true);
   };
 
   const startEdit = (todo: Todo) => {
@@ -221,27 +202,21 @@ export default function TodoDashboard() {
   const saveEdit = (id: number) => {
     if (!editingText.trim()) return;
 
-    setTodos((p) =>
-      p.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              text: editingText.trim(),
-              isEditing: false,
-            }
-          : t
-      )
-    );
-
     const target = todos.find((t) => t.id === id);
-    const name = session?.user?.name ?? "Someone";
+
+    const updated = todos.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            text: editingText.trim(),
+            isEditing: false,
+          }
+        : t
+    );
+    setTodos(updated);
+
     if (target && target.text !== editingText.trim()) {
-      sendLineMessage(
-        `คุณ ${name} ได้อัพเดท Task:\n จาก เดิม: ->"${
-          target.text
-        }"\nใหม่: "${editingText.trim()}"`,
-        true
-      );
+      sendTaskCarousel(updated, true);
     }
     toast.success("Task have been updated");
   };
@@ -249,12 +224,9 @@ export default function TodoDashboard() {
   const clearDone = () => {
     const doneCount = todos.filter((t) => t.completed).length;
     if (doneCount === 0) return;
-    setTodos((p) => p.filter((t) => !t.completed));
-    const name = session?.user?.name ?? "Someone";
-    sendLineMessage(
-      ` ${name} เคลียร์ Task ที่เสร็จแล้วจำนวน ${doneCount} รายการ`,
-      true
-    );
+    const updated = todos.filter((t) => !t.completed);
+    setTodos(updated);
+    sendTaskCarousel(updated, true);
     toast.success(`Cleared ${doneCount} completed tasks`);
   };
 
@@ -308,7 +280,6 @@ export default function TodoDashboard() {
   useEffect(() => {
     localStorage.setItem("todo-dashboard", JSON.stringify(todos));
   }, [todos]);
-
 
   const todoMobileStyles = `
     @media (max-width: 480px) {
@@ -445,33 +416,7 @@ export default function TodoDashboard() {
               {todos.length > 0 && (
                 <motion.button
                   onClick={async () => {
-                    const overdue = todos.filter(
-                      (t) => !t.completed && getDueDays(t.dueDate)?.overdue
-                    );
-                    const dueToday = todos.filter(
-                      (t) =>
-                        !t.completed &&
-                        getDueDays(t.dueDate)?.label === "Due today"
-                    );
-                    const remaining = todos.filter((t) => !t.completed).length;
-                    const done = todos.filter((t) => t.completed).length;
-                    let msg = `📋 Todo Summary\n${
-                      session?.user?.name ?? "User"
-                    }\n`;
-                    msg += ` Done: ${done}  |  🔲 Left: ${remaining}\n`;
-                    if (overdue.length > 0) {
-                      msg += `\n⚠️ Overdue (${overdue.length}):\n`;
-                      overdue.forEach((t) => {
-                        msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
-                      });
-                    }
-                    if (dueToday.length > 0) {
-                      msg += `\n Due Today (${dueToday.length}):\n`;
-                      dueToday.forEach((t) => {
-                        msg += `  • [${t.priority.toUpperCase()}] ${t.text}\n`;
-                      });
-                    }
-                    await sendLineMessage(msg);
+                    await sendTaskCarousel(todos);
                   }}
                   disabled={notifying}
                   whileHover={{ scale: 1.04 }}
@@ -690,7 +635,7 @@ export default function TodoDashboard() {
                 border: "none",
                 outline: "none",
                 color: "#fff",
-                fontSize: 16, 
+                fontSize: 16,
                 WebkitAppearance: "none",
               }}
             />
@@ -741,7 +686,7 @@ export default function TodoDashboard() {
                 borderRadius: 10,
                 padding: "10px 12px",
                 color: "rgba(255,255,255,0.7)",
-                fontSize: 16, 
+                fontSize: 16,
                 outline: "none",
                 colorScheme: "dark",
                 width: "100%",
@@ -909,7 +854,7 @@ export default function TodoDashboard() {
                             : "rgba(255,255,255,0.28)",
                           fontSize: 24,
                           flexShrink: 0,
-                          touchAction: "manipulation", 
+                          touchAction: "manipulation",
                           WebkitTapHighlightColor: "transparent",
                         }}
                       >
@@ -1103,7 +1048,6 @@ export default function TodoDashboard() {
     </>
   );
 }
-
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
