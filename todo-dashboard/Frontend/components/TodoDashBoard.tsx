@@ -85,7 +85,6 @@ export default function TodoDashboard() {
   const [notifying, setNotifying] = useState(false);
   const notifiedRef = useRef<Set<number>>(new Set());
 
-
   const sendLineUpdate = useCallback(
     async (
       taskList: Todo[],
@@ -305,6 +304,8 @@ export default function TodoDashboard() {
   }, [todos]);
 
   const todoMobileStyles = `
+    * { -webkit-tap-highlight-color: transparent; }
+
     @media (max-width: 480px) {
       .todo-filter-row {
         overflow-x: auto !important;
@@ -321,18 +322,13 @@ export default function TodoDashboard() {
         font-size: 12px !important;
       }
 
-      .todo-input-row {
-        flex-wrap: wrap !important;
-      }
-
       .todo-input {
         min-height: 48px !important;
-        font-size: 16px !important; /* 16px ป้องกัน iOS zoom เวลา focus */
+        font-size: 16px !important;
       }
 
       .todo-add-btn {
         min-height: 48px !important;
-        min-width: 48px !important;
       }
 
       .todo-item {
@@ -344,32 +340,23 @@ export default function TodoDashboard() {
         font-size: 13px !important;
       }
 
-      .todo-item-actions {
-        gap: 4px !important;
-      }
-
-      .todo-date-row {
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-      }
-
-      .todo-date-input {
-        font-size: 13px !important;
-        min-height: 40px !important;
-      }
-
-      .todo-priority-btn {
-        min-height: 36px !important;
-        font-size: 11px !important;
-        padding: 4px 8px !important;
-      }
-
       .todo-stat-card {
         padding: 10px 8px !important;
       }
 
       .todo-stat-value {
         font-size: 1.5rem !important;
+      }
+
+      /* Date input on mobile */
+      input[type="date"] {
+        font-size: 14px !important;
+        min-height: 38px !important;
+      }
+
+      /* Prevent any element from overflowing the viewport */
+      .todo-dashboard-root * {
+        max-width: 100%;
       }
     }
   `;
@@ -380,15 +367,20 @@ export default function TodoDashboard() {
       <div
         style={{
           width: "100%",
+          maxWidth: "100%",
+          overflowX: "hidden",
           fontFamily: "'DM Sans', sans-serif",
           color: "#fff",
+          boxSizing: "border-box",
         }}
       >
         <div
           style={{
             width: "100%",
+            maxWidth: "100%",
             padding: "0",
             boxSizing: "border-box",
+            overflowX: "hidden",
           }}
         >
           {/* HEADING */}
@@ -663,60 +655,99 @@ export default function TodoDashboard() {
               }}
             />
 
-            {/* PRIORITY */}
-
+            {/* PRIORITY + DATE — single row, wraps on narrow screens */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 5,
+                gap: 8,
+                flexWrap: "wrap",
               }}
             >
-              <RiFlag2Line
+              {/* Priority selector */}
+              <div
                 style={{
-                  color: "rgba(255,255,255,0.25)",
-                  fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flexShrink: 0,
                 }}
-              />
-
-              {(["high", "medium", "low"] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriority(p)}
+              >
+                <RiFlag2Line
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    background: PRI[p].bg,
-                    border: `2px solid ${
-                      priority === p ? PRI[p].color : "transparent"
-                    }`,
+                    color: "rgba(255,255,255,0.35)",
+                    fontSize: 14,
+                    flexShrink: 0,
                   }}
                 />
-              ))}
+                {(["high", "medium", "low"] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      minWidth: 22,
+                      minHeight: 22,
+                      padding: 0,
+                      flexShrink: 0,
+                      boxSizing: "border-box",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      background: PRI[p].color,
+                      border: `2px solid ${
+                        priority === p ? "#fff" : "transparent"
+                      }`,
+                      outline:
+                        priority === p ? `2px solid ${PRI[p].color}` : "none",
+                      outlineOffset: 1,
+                      opacity: priority === p ? 1 : 0.35,
+                      transition: "all 0.15s",
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Date input — expands to fill remaining space */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flex: 1,
+                  minWidth: 140,
+                }}
+              >
+                <RiCalendarLine
+                  style={{
+                    color: "rgba(255,255,255,0.25)",
+                    fontSize: 14,
+                    flexShrink: 0,
+                  }}
+                />
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 10,
+                    padding: "8px 10px",
+                    color: dueDate
+                      ? "rgba(255,255,255,0.8)"
+                      : "rgba(255,255,255,0.3)",
+                    fontSize: 14,
+                    outline: "none",
+                    colorScheme: "dark",
+                    boxSizing: "border-box",
+                    WebkitAppearance: "none",
+                  }}
+                />
+              </div>
             </div>
-
-            {/* DATE */}
-
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 10,
-                padding: "10px 12px",
-                color: "rgba(255,255,255,0.7)",
-                fontSize: 16,
-                outline: "none",
-                colorScheme: "dark",
-                width: "100%",
-                boxSizing: "border-box" as const,
-                WebkitAppearance: "none",
-              }}
-            />
 
             <motion.button
               onClick={addTodo}
