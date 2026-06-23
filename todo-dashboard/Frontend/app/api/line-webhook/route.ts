@@ -6,7 +6,6 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get("x-line-signature") ?? "";
   const secret = process.env.LINE_CHANNEL_SECRET ?? "";
 
-  // ── Verify signature ──
   if (secret) {
     const hash = crypto
       .createHmac("sha256", secret)

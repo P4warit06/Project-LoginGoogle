@@ -88,25 +88,40 @@ export default function TodoDashboard() {
   const sendLineUpdate = useCallback(
     async (
       taskList: Todo[],
-      opts: { newTask?: Todo; silent?: boolean } = {}
+      opts: {
+        newTask?: Todo;
+        silent?: boolean;
+        clearEvent?: {
+          type: "all_completed" | "all_deleted";
+          taskCount: number;
+        };
+      } = {}
     ) => {
       setNotifying(true);
       try {
-        const tasks = taskList.map((t) => ({
-          name: t.text,
-          status: t.completed ? "done" : "todo",
-          dueDate: t.dueDate,
-        }));
-
         const body: {
-          tasks: typeof tasks;
+          tasks?: { name: string; status: string; dueDate?: string }[];
           newTask?: {
             name: string;
             priority: Todo["priority"];
             dueDate?: string;
             createdBy?: string;
           };
-        } = { tasks };
+          clearEvent?: {
+            type: "all_completed" | "all_deleted";
+            taskCount: number;
+            clearedBy?: string;
+          };
+        } = {};
+
+        // ส่ง tasks เฉพาะตอนที่ยังมีงานเหลืออยู่
+        if (taskList.length > 0) {
+          body.tasks = taskList.map((t) => ({
+            name: t.text,
+            status: t.completed ? "done" : "todo",
+            dueDate: t.dueDate,
+          }));
+        }
 
         if (opts.newTask) {
           body.newTask = {
@@ -114,6 +129,13 @@ export default function TodoDashboard() {
             priority: opts.newTask.priority,
             dueDate: opts.newTask.dueDate,
             createdBy: session?.user?.name ?? undefined,
+          };
+        }
+
+        if (opts.clearEvent) {
+          body.clearEvent = {
+            ...opts.clearEvent,
+            clearedBy: session?.user?.name ?? undefined,
           };
         }
 
@@ -182,8 +204,18 @@ export default function TodoDashboard() {
   const deleteTodo = (id: number) => {
     const updated = todos.filter((t) => t.id !== id);
     setTodos(updated);
-    toast.error("Task has been deleted");
-    sendLineUpdate(updated, { silent: true });
+
+    if (updated.length === 0) {
+      // ลบ task สุดท้ายออก → ล้าง board ทั้งหมด
+      sendLineUpdate([], {
+        silent: false,
+        clearEvent: { type: "all_deleted", taskCount: todos.length },
+      });
+      toast("🗑️ ล้างรายการงานทั้งหมดแล้ว");
+    } else {
+      toast.error("Task has been deleted");
+      sendLineUpdate(updated, { silent: true });
+    }
   };
 
   const toggleTodo = (id: number) => {
@@ -244,12 +276,22 @@ export default function TodoDashboard() {
   };
 
   const clearDone = () => {
-    const doneCount = todos.filter((t) => t.completed).length;
-    if (doneCount === 0) return;
+    const completedCount = todos.filter((t) => t.completed).length;
+    if (completedCount === 0) return;
     const updated = todos.filter((t) => !t.completed);
     setTodos(updated);
-    sendLineUpdate(updated, { silent: true });
-    toast.success(`Cleared ${doneCount} completed tasks`);
+
+    if (updated.length === 0) {
+      // ทำงานครบทุกอันแล้วเคลียร์ → all_completed
+      sendLineUpdate([], {
+        silent: false,
+        clearEvent: { type: "all_completed", taskCount: completedCount },
+      });
+      toast.success(`🎉 ยอดเยี่ยม! ทำงานครบ ${completedCount} รายการแล้ว`);
+    } else {
+      sendLineUpdate(updated, { silent: true });
+      toast.success(`Cleared ${completedCount} completed tasks`);
+    }
   };
 
   const filtered = useMemo(() => {

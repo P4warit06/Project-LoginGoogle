@@ -11,6 +11,12 @@ type NewTaskInfo = {
   createdBy?: string;
 };
 
+type ClearEvent = {
+  type: "all_completed" | "all_deleted";
+  clearedBy?: string; // display name ของ user
+  taskCount: number;  // จำนวน task ที่ถูกจัดการ
+};
+
 function getDueLabel(
   dueDate?: string
 ): { label: string; overdue: boolean } | null {
@@ -55,7 +61,6 @@ const THEME = {
   textSecondary: "#B4B4C7",
   border: "#23243A",
 };
-/* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
 function buildNewTaskBubble(task: NewTaskInfo) {
   const badge = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium;
 
@@ -237,6 +242,184 @@ function buildNewTaskBubble(task: NewTaskInfo) {
   };
 }
 
+
+function buildAllClearBubble(event: ClearEvent) {
+  const isCompleted = event.type === "all_completed";
+
+  const config = isCompleted
+    ? {
+        headerBg: THEME.success,
+        headerIcon: "!",
+        headerLabel: "ALL TASKS DONE",
+        headline: "ยอดเยี่ยม! ทำงานครบแล้ว",
+        subtext:
+          "คุณทำงานสำเร็จครบทุกรายการแล้ว\nพักสักครู่แล้วค่อยวางแผนงานใหม่ ",
+        actionLabel: "เพิ่มงานรอบถัดไป",
+        accentColor: THEME.success,
+        statsLabel: "งานที่เสร็จสมบูรณ์",
+      }
+    : {
+        headerBg: THEME.secondary,
+        headerIcon: "🗑️",
+        headerLabel: "BOARD CLEARED",
+        headline: "ล้างรายการงานเรียบร้อย",
+        subtext:
+          "รายการงานทั้งหมดถูกลบออกแล้ว\nพร้อมเริ่มต้นวางแผนงานใหม่ได้เลย",
+        actionLabel: "เริ่มสร้างงานใหม่",
+        accentColor: THEME.secondary,
+        statsLabel: "งานที่ถูกลบ",
+      };
+
+  const nowTh = new Date().toLocaleString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return {
+    type: "bubble",
+    styles: {
+      body: { backgroundColor: THEME.bg },
+    },
+    body: {
+      type: "box",
+      layout: "vertical",
+      backgroundColor: THEME.bg,
+      spacing: "none",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          alignItems: "center",
+          spacing: "sm",
+          contents: [
+            {
+              type: "text",
+              text: config.headerIcon,
+              size: "sm",
+              flex: 0,
+            },
+            {
+              type: "text",
+              text: config.headerLabel,
+              weight: "bold",
+              color: config.accentColor,
+              size: "sm",
+            },
+          ],
+        },
+        {
+          type: "text",
+          text: config.headline,
+          weight: "bold",
+          color: THEME.text,
+          size: "xl",
+          margin: "md",
+          wrap: true,
+        },
+        {
+          type: "text",
+          text: config.subtext,
+          color: THEME.textSecondary,
+          size: "sm",
+          margin: "sm",
+          wrap: true,
+        },
+        {
+          type: "separator",
+          margin: "xl",
+          color: THEME.border,
+        },
+        {
+          type: "box",
+          layout: "vertical",
+          backgroundColor: THEME.card,
+          cornerRadius: "12px",
+          paddingAll: "14px",
+          margin: "xl",
+          spacing: "md",
+          contents: [
+            {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: config.statsLabel,
+                  color: THEME.textSecondary,
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: `${event.taskCount} รายการ`,
+                  color: config.accentColor,
+                  size: "sm",
+                  weight: "bold",
+                  align: "end",
+                },
+              ],
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: "ดำเนินการโดย",
+                  color: THEME.textSecondary,
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: event.clearedBy ?? "System",
+                  color: THEME.text,
+                  size: "sm",
+                  align: "end",
+                },
+              ],
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              contents: [
+                {
+                  type: "text",
+                  text: "เวลา",
+                  color: THEME.textSecondary,
+                  size: "sm",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: nowTh,
+                  color: THEME.text,
+                  size: "sm",
+                  align: "end",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "button",
+          style: "primary",
+          color: config.accentColor,
+          margin: "xl",
+          action: {
+            type: "uri",
+            label: config.actionLabel,
+            uri: "https://googlelogin-pwratmosph.vercel.app",
+          },
+        },
+      ],
+    },
+  };
+}
+
 /* ────Task Carousel (สรุปงานทั้งหมด)─── */
 
 function buildTaskBubble(task: Task) {
@@ -372,13 +555,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tasks, newTask } = (await req.json()) as {
-    tasks: Task[];
+  const { tasks, newTask, clearEvent } = (await req.json()) as {
+    tasks?: Task[];
     newTask?: NewTaskInfo;
+    clearEvent?: ClearEvent;
   };
 
-  if (!tasks?.length) {
-    return NextResponse.json({ error: "tasks required" }, { status: 400 });
+  if (!tasks?.length && !newTask && !clearEvent) {
+    return NextResponse.json(
+      { error: "tasks, newTask, or clearEvent required" },
+      { status: 400 }
+    );
   }
 
   const userId = process.env.LINE_USER_ID;
@@ -394,16 +581,29 @@ export async function POST(req: NextRequest) {
   if (newTask) {
     messages.push({
       type: "flex",
-      altText: `แจ้งเตือน: มีการสร้างงานใหม่ - ${newTask.name}`,
+      altText: `แจ้งเตือน: มีการสร้างงานใหม่ — ${newTask.name}`,
       contents: buildNewTaskBubble(newTask),
     });
   }
 
-  messages.push({
-    type: "flex",
-    altText: "Your Daily To-Do List",
-    contents: buildCarousel(tasks),
-  });
+  if (clearEvent) {
+    const altTextMap: Record<ClearEvent["type"], string> = {
+      all_completed: `🎉 ยินดีด้วย! คุณทำงานครบ ${clearEvent.taskCount} รายการแล้ว`,
+      all_deleted: `🗑️ ล้างรายการงานทั้งหมด ${clearEvent.taskCount} รายการเรียบร้อย`,
+    };
+    messages.push({
+      type: "flex",
+      altText: altTextMap[clearEvent.type],
+      contents: buildAllClearBubble(clearEvent),
+    });
+  }
+  if (tasks?.length) {
+    messages.push({
+      type: "flex",
+      altText: "Your Daily To-Do List",
+      contents: buildCarousel(tasks),
+    });
+  }
 
   try {
     const ok = await pushMessages(userId, messages);
