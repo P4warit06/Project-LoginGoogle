@@ -14,7 +14,7 @@ type NewTaskInfo = {
 type ClearEvent = {
   type: "all_completed" | "all_deleted";
   clearedBy?: string; // display name ของ user
-  taskCount: number;  // จำนวน task ที่ถูกจัดการ
+  taskCount: number; // จำนวน task ที่ถูกจัดการ
 };
 
 function getDueLabel(
@@ -242,7 +242,6 @@ function buildNewTaskBubble(task: NewTaskInfo) {
   };
 }
 
-
 function buildAllClearBubble(event: ClearEvent) {
   const isCompleted = event.type === "all_completed";
 
@@ -251,23 +250,22 @@ function buildAllClearBubble(event: ClearEvent) {
         headerBg: THEME.success,
         headerIcon: "!",
         headerLabel: "ALL TASKS DONE",
-        headline: "ยอดเยี่ยม! ทำงานครบแล้ว",
+        headline: "Nice Job! All task is done",
         subtext:
-          "คุณทำงานสำเร็จครบทุกรายการแล้ว\nพักสักครู่แล้วค่อยวางแผนงานใหม่ ",
-        actionLabel: "เพิ่มงานรอบถัดไป",
+          "You have successfully completed all the tasks.\n Take a break ☕ ... and then plan your next assignment.",
+        actionLabel: "Add Next Task",
         accentColor: THEME.success,
-        statsLabel: "งานที่เสร็จสมบูรณ์",
+        statsLabel: "Task completed",
       }
     : {
         headerBg: THEME.secondary,
         headerIcon: "🗑️",
         headerLabel: "BOARD CLEARED",
-        headline: "ล้างรายการงานเรียบร้อย",
-        subtext:
-          "รายการงานทั้งหมดถูกลบออกแล้ว\nพร้อมเริ่มต้นวางแผนงานใหม่ได้เลย",
-        actionLabel: "เริ่มสร้างงานใหม่",
+        headline: "All task Entries have been successfully deleted.",
+        subtext: "Task has been deleted \n Ready to Start New Task",
+        actionLabel: "Create New Task",
         accentColor: THEME.secondary,
-        statsLabel: "งานที่ถูกลบ",
+        statsLabel: "Task deleted",
       };
 
   const nowTh = new Date().toLocaleString("th-TH", {
@@ -368,7 +366,7 @@ function buildAllClearBubble(event: ClearEvent) {
               contents: [
                 {
                   type: "text",
-                  text: "ดำเนินการโดย",
+                  text: "Modifiy By",
                   color: THEME.textSecondary,
                   size: "sm",
                   flex: 0,
@@ -388,7 +386,7 @@ function buildAllClearBubble(event: ClearEvent) {
               contents: [
                 {
                   type: "text",
-                  text: "เวลา",
+                  text: "Time",
                   color: THEME.textSecondary,
                   size: "sm",
                   flex: 0,
@@ -473,7 +471,7 @@ function buildTaskBubble(task: Task) {
         {
           type: "box",
           layout: "vertical",
-         backgroundColor: "#23243A", 
+          backgroundColor: "#23243A",
           height: "6px",
           margin: "sm",
           contents: [
