@@ -68,7 +68,7 @@ function getDueDays(date?: string) {
 }
 
 export default function TodoDashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
@@ -84,6 +84,16 @@ export default function TodoDashboard() {
   const editRef = useRef<HTMLInputElement>(null);
   const [notifying, setNotifying] = useState(false);
   const notifiedRef = useRef<Set<number>>(new Set());
+
+  const storageKey = useMemo(() => {
+    const uid =
+      (session?.user as any)?.id ?? session?.user?.email ?? session?.user?.name;
+    const provider = (session?.user as any)?.provider ?? "unknown";
+    if (!uid) return null;
+    return `todos_${provider}_${uid}`;
+  }, [session]);
+
+  const justLoadedRef = useRef(false);
 
   const sendLineUpdate = useCallback(
     async (
@@ -282,7 +292,6 @@ export default function TodoDashboard() {
     setTodos(updated);
 
     if (updated.length === 0) {
-      // ทำงานครบทุกอันแล้วเคลียร์ → all_completed
       sendLineUpdate([], {
         silent: false,
         clearEvent: { type: "all_completed", taskCount: completedCount },
@@ -326,24 +335,41 @@ export default function TodoDashboard() {
   const progress =
     todos.length === 0 ? 0 : Math.round((doneCount / todos.length) * 100);
 
+  // โหลด todos เมื่อ storageKey เปลี่ยน (login / switch account)
   useEffect(() => {
-    const savedTodos = localStorage.getItem("todo-dashboard");
+    if (!storageKey) return; // ไม่ได้ login
 
-    if (savedTodos) {
-      const parsed = JSON.parse(savedTodos);
+    justLoadedRef.current = true; 
 
-      setTodos(
-        parsed.map((todo: Todo) => ({
-          ...todo,
-          createdAt: new Date(todo.createdAt),
-        }))
-      );
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        setTodos(
+          JSON.parse(saved).map((t: Todo) => ({
+            ...t,
+            createdAt: new Date(t.createdAt),
+          }))
+        );
+      } catch {
+        setTodos([]);  
+      }
+    } else {
+      setTodos([]); 
     }
-  }, []);
+  }, [storageKey]);
 
+  // ลง localStorage ของ account 
   useEffect(() => {
-    localStorage.setItem("todo-dashboard", JSON.stringify(todos));
-  }, [todos]);
+    if (!storageKey) return;
+
+    
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false;
+      return;
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(todos));
+  }, [todos, storageKey]);
 
   const todoMobileStyles = `
     * { -webkit-tap-highlight-color: transparent; }
@@ -656,7 +682,7 @@ export default function TodoDashboard() {
                 border: "1px solid rgba(255,255,255,0.09)",
                 borderRadius: 14,
                 color: "#fff",
-                fontSize: 16, // ป้องกัน iOS zoom
+                fontSize: 16, // งกัน iOS zoom
                 outline: "none",
                 boxSizing: "border-box" as const,
                 WebkitAppearance: "none" as const,
