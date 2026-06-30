@@ -85,15 +85,30 @@ export default function TodoDashboard() {
   const [notifying, setNotifying] = useState(false);
   const notifiedRef = useRef<Set<number>>(new Set());
 
+  /**
+   * storageKey — unique ต่อ account
+   * Google  → "todos_google_<sub>"
+   * LINE    → "todos_line_<userId>"
+   * Microsoft → "todos_azure-ad_<sub>"
+   */
   const storageKey = useMemo(() => {
     const uid =
-      (session?.user as any)?.id ?? session?.user?.email ?? session?.user?.name;
+      (session?.user as any)?.id ??
+      session?.user?.email ??
+      session?.user?.name;
     const provider = (session?.user as any)?.provider ?? "unknown";
     if (!uid) return null;
     return `todos_${provider}_${uid}`;
   }, [session]);
 
+  // ป้องกัน save effect ทำงานก่อนที่ load จะเสร็จ
   const justLoadedRef = useRef(false);
+
+  // LINE userId ของ session ปัจจุบัน (มีค่าเฉพาะตอน login ด้วย LINE เท่านั้น)
+  const lineUserId =
+    (session?.user as any)?.provider === "line"
+      ? (session?.user as any)?.id
+      : undefined;
 
   const sendLineUpdate = useCallback(
     async (
@@ -122,6 +137,7 @@ export default function TodoDashboard() {
             taskCount: number;
             clearedBy?: string;
           };
+          lineUserId?: string;
         } = {};
 
         // ส่ง tasks เฉพาะตอนที่ยังมีงานเหลืออยู่
@@ -149,13 +165,35 @@ export default function TodoDashboard() {
           };
         }
 
+        // ผูก notification เข้ากับ LINE account ของผู้ใช้ที่ login อยู่ตอนนี้
+        if (lineUserId) {
+          body.lineUserId = lineUserId;
+        }
+
         const res = await fetch("/api/notify-line", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
+
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data?.skipped) {
+          // ไม่มี LINE ผูกไว้ — ไม่ใช่ความผิดพลาด แค่ยังไม่ได้เชื่อมต่อ
+          if (!opts.silent) {
+            toast("เชื่อมต่อ LINE ก่อน เพื่อรับการแจ้งเตือน", { icon: "💬" });
+          }
+          return true;
+        }
+
         if (res.ok && !opts.silent) toast.success("📩 ส่ง LINE แล้ว");
-        if (!res.ok && !opts.silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
+        if (!res.ok && !opts.silent) {
+          toast.error(
+            data?.error?.includes("เพิ่มเพื่อน")
+              ? "❌ กรุณาเพิ่มเพื่อน LINE Official Account ก่อนรับการแจ้งเตือน"
+              : "❌ ส่ง LINE ไม่สำเร็จ"
+          );
+        }
         return res.ok;
       } catch {
         if (!opts.silent) toast.error("❌ ส่ง LINE ไม่สำเร็จ");
@@ -164,8 +202,9 @@ export default function TodoDashboard() {
         setNotifying(false);
       }
     },
-    [session]
+    [session, lineUserId]
   );
+
 
   /* ── Auto-notify overdue todos ── */
   useEffect(() => {
@@ -337,9 +376,9 @@ export default function TodoDashboard() {
 
   // โหลด todos เมื่อ storageKey เปลี่ยน (login / switch account)
   useEffect(() => {
-    if (!storageKey) return; // ไม่ได้ login
+    if (!storageKey) return; // ยัง loading หรือยังไม่ได้ login
 
-    justLoadedRef.current = true; 
+    justLoadedRef.current = true; // บอก save effect ให้ข้าม 1 รอบ
 
     const saved = localStorage.getItem(storageKey);
     if (saved) {
@@ -351,18 +390,18 @@ export default function TodoDashboard() {
           }))
         );
       } catch {
-        setTodos([]);  
+        setTodos([]); // parse error → เริ่มใหม่
       }
     } else {
-      setTodos([]); 
+      setTodos([]); // account ใหม่ — ยังไม่มีข้อมูล
     }
   }, [storageKey]);
 
-  // ลง localStorage ของ account 
+  // บันทึก todos ลง localStorage ของ account ปัจจุบัน
   useEffect(() => {
     if (!storageKey) return;
 
-    
+    // ข้าม 1 รอบแรกหลัง load เพื่อไม่ให้ overwrite ด้วย state เก่า
     if (justLoadedRef.current) {
       justLoadedRef.current = false;
       return;
@@ -682,7 +721,7 @@ export default function TodoDashboard() {
                 border: "1px solid rgba(255,255,255,0.09)",
                 borderRadius: 14,
                 color: "#fff",
-                fontSize: 16, // งกัน iOS zoom
+                fontSize: 16, // ป้องกัน iOS zoom
                 outline: "none",
                 boxSizing: "border-box" as const,
                 WebkitAppearance: "none" as const,

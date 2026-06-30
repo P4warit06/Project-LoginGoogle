@@ -13,7 +13,7 @@ type NewTaskInfo = {
 
 type ClearEvent = {
   type: "all_completed" | "all_deleted";
-  clearedBy?: string; // display name ของ user
+  clearedBy?: string; // ชื่อ/display name ของ user
   taskCount: number; // จำนวน task ที่ถูกจัดการ
 };
 
@@ -61,6 +61,7 @@ const THEME = {
   textSecondary: "#B4B4C7",
   border: "#23243A",
 };
+/* ─── New Task Creation Alert (Hero Bubble) ────ตอนมีการสร้าง task ใหม่เท่านั้น */
 function buildNewTaskBubble(task: NewTaskInfo) {
   const badge = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.medium;
 
@@ -242,6 +243,9 @@ function buildNewTaskBubble(task: NewTaskInfo) {
   };
 }
 
+/* ─── All-Clear Notification Bubble ─────────────────────────────────────────
+   ส่งเมื่อ user เคลียร์งานครบ (all_completed) หรือลบทิ้งทั้งหมด (all_deleted)
+   ─────────────────────────────────────────────────────────────────────────── */
 function buildAllClearBubble(event: ClearEvent) {
   const isCompleted = event.type === "all_completed";
 
@@ -264,9 +268,11 @@ function buildAllClearBubble(event: ClearEvent) {
         headline: "All task Entries have been successfully deleted.",
         subtext: "Task has been deleted \n Ready to Start New Task",
         actionLabel: "Create New Task",
+
         accentColor: THEME.secondary,
         statsLabel: "Task deleted",
       };
+
 
   const nowTh = new Date().toLocaleString("th-TH", {
     day: "numeric",
@@ -287,6 +293,7 @@ function buildAllClearBubble(event: ClearEvent) {
       backgroundColor: THEME.bg,
       spacing: "none",
       contents: [
+        /* ── Header badge ── */
         {
           type: "box",
           layout: "horizontal",
@@ -308,6 +315,7 @@ function buildAllClearBubble(event: ClearEvent) {
             },
           ],
         },
+        /* ── Headline ── */
         {
           type: "text",
           text: config.headline,
@@ -317,6 +325,7 @@ function buildAllClearBubble(event: ClearEvent) {
           margin: "md",
           wrap: true,
         },
+        /* ── Subtext ── */
         {
           type: "text",
           text: config.subtext,
@@ -325,11 +334,13 @@ function buildAllClearBubble(event: ClearEvent) {
           margin: "sm",
           wrap: true,
         },
+        /* ── Divider ── */
         {
           type: "separator",
           margin: "xl",
           color: THEME.border,
         },
+        /* ── Stats card ── */
         {
           type: "box",
           layout: "vertical",
@@ -366,7 +377,7 @@ function buildAllClearBubble(event: ClearEvent) {
               contents: [
                 {
                   type: "text",
-                  text: "Modifiy By",
+                  text: "Modify By",
                   color: THEME.textSecondary,
                   size: "sm",
                   flex: 0,
@@ -402,6 +413,7 @@ function buildAllClearBubble(event: ClearEvent) {
             },
           ],
         },
+        /* ── CTA button ── */
         {
           type: "button",
           style: "primary",
@@ -553,10 +565,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tasks, newTask, clearEvent } = (await req.json()) as {
+  const { tasks, newTask, clearEvent, lineUserId } = (await req.json()) as {
     tasks?: Task[];
     newTask?: NewTaskInfo;
     clearEvent?: ClearEvent;
+    lineUserId?: string; // LINE userId ของผู้ใช้ปัจจุบัน (ส่งมาจาก client)
   };
 
   if (!tasks?.length && !newTask && !clearEvent) {
@@ -566,16 +579,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const userId = process.env.LINE_USER_ID;
-  if (!userId) {
-    return NextResponse.json(
-      { error: "LINE_USER_ID not configured" },
-      { status: 500 }
-    );
+  /**
+   * หา target LINE userId ตามลำดับความสำคัญ:
+   * 1) lineUserId ที่ client ส่งมา (ผูกกับ session ปัจจุบันที่ login ด้วย LINE)
+   * 2) session.user.id เมื่อ provider คือ "line" (เผื่อ client ไม่ได้ส่งมา)
+   * 3) LINE_USER_ID env var — เก็บไว้เป็น fallback สำหรับ admin/testing เท่านั้น
+   */
+  const sessionProvider = (session.user as any)?.provider;
+  const sessionLineId =
+    sessionProvider === "line" ? (session.user as any)?.id : undefined;
+
+  const targetUserId = lineUserId || sessionLineId || process.env.LINE_USER_ID;
+
+  if (!targetUserId) {
+    // ผู้ใช้ login ด้วย Google/Microsoft และยังไม่ได้เชื่อมต่อ LINE
+    // → ไม่ใช่ error ของระบบ แค่ "ยังไม่มีปลายทางให้ส่ง" ข้าม notification เงียบๆ
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: "no-line-account-linked",
+    });
   }
 
   const messages: unknown[] = [];
 
+  // 1) New task alert
   if (newTask) {
     messages.push({
       type: "flex",
@@ -584,10 +612,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  
   if (clearEvent) {
     const altTextMap: Record<ClearEvent["type"], string> = {
-      all_completed: `🎉 ยินดีด้วย! คุณทำงานครบ ${clearEvent.taskCount} รายการแล้ว`,
-      all_deleted: `🗑️ ล้างรายการงานทั้งหมด ${clearEvent.taskCount} รายการเรียบร้อย`,
+      all_completed: `Congratulation ! You have Completed ${clearEvent.taskCount} task.`,
+      all_deleted: ` Cleared all  ${clearEvent.taskCount} tasks.`,
     };
     messages.push({
       type: "flex",
@@ -595,6 +624,7 @@ export async function POST(req: NextRequest) {
       contents: buildAllClearBubble(clearEvent),
     });
   }
+
   if (tasks?.length) {
     messages.push({
       type: "flex",
@@ -603,9 +633,22 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  if (messages.length === 0) {
+    return NextResponse.json({ ok: true, skipped: true, reason: "no-content" });
+  }
+
   try {
-    const ok = await pushMessages(userId, messages);
-    if (!ok) throw new Error("LINE API rejected");
+    const ok = await pushMessages(targetUserId, messages);
+    if (!ok) {
+      // มักเกิดจากผู้ใช้ยังไม่ได้ "เพิ่มเพื่อน" LINE Official Account ของบอท
+      return NextResponse.json(
+        {
+          error:
+            "LINE push rejected — ผู้ใช้อาจยังไม่ได้เพิ่มเพื่อน LINE Official Account",
+        },
+        { status: 502 }
+      );
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("LINE push error:", err);
