@@ -4,18 +4,111 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 type Task = { name: string; status: string; dueDate?: string };
 
+type ActorInfo = {
+  name?: string;
+  provider?: string;
+};
+
 type NewTaskInfo = {
   name: string;
   priority: "high" | "medium" | "low";
   dueDate?: string;
-  createdBy?: string;
+  createdBy?: ActorInfo;
 };
 
 type ClearEvent = {
   type: "all_completed" | "all_deleted";
-  clearedBy?: string; // ชื่อ/display name ของ user
-  taskCount: number; // จำนวน task ที่ถูกจัดการ
+  clearedBy?: ActorInfo;
+  taskCount: number;
 };
+
+type ProviderBadge = {
+  label: string;
+  color: string;
+  icon: string;
+};
+
+const PROVIDER_BADGE: Record<string, ProviderBadge> = {
+  line: {
+    label: "LINE",
+    color: "#06C755",
+    icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/line.svg",
+  },
+  google: {
+    label: "Google",
+    color: "#4285F4",
+    icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/google.svg",
+  },
+  "azure-ad": {
+    label: "Microsoft",
+    color: "#0078D4",
+    icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoft.svg",
+  },
+};
+function getProviderBadge(provider?: string): ProviderBadge | undefined {
+  if (!provider) return undefined;
+  return PROVIDER_BADGE[provider.toLowerCase()];
+}
+
+/**
+ * สร้าง "row" สำหรับแสดงผู้ดำเนินการ พร้อม provider badge (รูปไอคอน + label สี)
+ * ใช้ร่วมกันทั้ง "Created By" (new task) และ "Modify By" (all-clear)
+ */
+function buildActorRow(label: string, actor?: ActorInfo) {
+  const badge = getProviderBadge(actor?.provider);
+  const name = actor?.name ?? "System";
+
+  return {
+    type: "box",
+    layout: "horizontal",
+    alignItems: "center",
+    contents: [
+      {
+        type: "text",
+        text: label,
+        color: THEME.textSecondary,
+        size: "sm",
+        flex: 2,
+      },
+      {
+        type: "box",
+        layout: "horizontal",
+        flex: 4,
+        justifyContent: "flex-end",
+        alignItems: "center",
+        spacing: "sm",
+        contents: [
+          {
+            type: "text",
+            text: name,
+            color: THEME.text,
+            size: "sm",
+            flex: 0,
+          },
+          ...(badge
+            ? [
+                {
+                  type: "image",
+                  url: badge.icon,
+                  size: "18px",
+                  aspectMode: "fit",
+                  flex: 0,
+                },
+                {
+                  type: "text",
+                  text: badge.label,
+                  color: badge.color,
+                  weight: "bold",
+                  size: "xs",
+                  flex: 0,
+                },
+              ]
+            : []),
+        ],
+      },
+    ],
+  };
+}
 
 function getDueLabel(
   dueDate?: string
@@ -147,26 +240,7 @@ function buildNewTaskBubble(task: NewTaskInfo) {
                 },
               ],
             },
-            {
-              type: "box",
-              layout: "horizontal",
-              contents: [
-                {
-                  type: "text",
-                  text: "Created By",
-                  color: THEME.textSecondary,
-                  size: "sm",
-                  flex: 0,
-                },
-                {
-                  type: "text",
-                  text: task.createdBy ?? "System",
-                  color: THEME.text,
-                  size: "sm",
-                  align: "end",
-                },
-              ],
-            },
+            buildActorRow("Created By", task.createdBy),
             {
               type: "box",
               layout: "horizontal",
@@ -273,7 +347,6 @@ function buildAllClearBubble(event: ClearEvent) {
         statsLabel: "Task deleted",
       };
 
-
   const nowTh = new Date().toLocaleString("th-TH", {
     day: "numeric",
     month: "short",
@@ -371,26 +444,7 @@ function buildAllClearBubble(event: ClearEvent) {
                 },
               ],
             },
-            {
-              type: "box",
-              layout: "horizontal",
-              contents: [
-                {
-                  type: "text",
-                  text: "Modify By",
-                  color: THEME.textSecondary,
-                  size: "sm",
-                  flex: 0,
-                },
-                {
-                  type: "text",
-                  text: event.clearedBy ?? "System",
-                  color: THEME.text,
-                  size: "sm",
-                  align: "end",
-                },
-              ],
-            },
+            buildActorRow("Modify By", event.clearedBy),
             {
               type: "box",
               layout: "horizontal",
@@ -413,7 +467,6 @@ function buildAllClearBubble(event: ClearEvent) {
             },
           ],
         },
-        /* ── CTA button ── */
         {
           type: "button",
           style: "primary",
@@ -429,8 +482,6 @@ function buildAllClearBubble(event: ClearEvent) {
     },
   };
 }
-
-/* ────Task Carousel (สรุปงานทั้งหมด)─── */
 
 function buildTaskBubble(task: Task) {
   const due = getDueLabel(task.dueDate);
@@ -569,7 +620,7 @@ export async function POST(req: NextRequest) {
     tasks?: Task[];
     newTask?: NewTaskInfo;
     clearEvent?: ClearEvent;
-    lineUserId?: string; // LINE userId ของผู้ใช้ปัจจุบัน (ส่งมาจาก client)
+    lineUserId?: string; // LINE userId ส่งมาจาก client
   };
 
   if (!tasks?.length && !newTask && !clearEvent) {
@@ -592,8 +643,6 @@ export async function POST(req: NextRequest) {
   const targetUserId = lineUserId || sessionLineId || process.env.LINE_USER_ID;
 
   if (!targetUserId) {
-    // ผู้ใช้ login ด้วย Google/Microsoft และยังไม่ได้เชื่อมต่อ LINE
-    // → ไม่ใช่ error ของระบบ แค่ "ยังไม่มีปลายทางให้ส่ง" ข้าม notification เงียบๆ
     return NextResponse.json({
       ok: true,
       skipped: true,
@@ -603,7 +652,6 @@ export async function POST(req: NextRequest) {
 
   const messages: unknown[] = [];
 
-  // 1) New task alert
   if (newTask) {
     messages.push({
       type: "flex",
@@ -612,7 +660,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  
   if (clearEvent) {
     const altTextMap: Record<ClearEvent["type"], string> = {
       all_completed: `Congratulation ! You have Completed ${clearEvent.taskCount} task.`,
@@ -640,7 +687,6 @@ export async function POST(req: NextRequest) {
   try {
     const ok = await pushMessages(targetUserId, messages);
     if (!ok) {
-      // มักเกิดจากผู้ใช้ยังไม่ได้ "เพิ่มเพื่อน" LINE Official Account ของบอท
       return NextResponse.json(
         {
           error:

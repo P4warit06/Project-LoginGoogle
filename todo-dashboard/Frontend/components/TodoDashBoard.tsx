@@ -93,9 +93,7 @@ export default function TodoDashboard() {
    */
   const storageKey = useMemo(() => {
     const uid =
-      (session?.user as any)?.id ??
-      session?.user?.email ??
-      session?.user?.name;
+      (session?.user as any)?.id ?? session?.user?.email ?? session?.user?.name;
     const provider = (session?.user as any)?.provider ?? "unknown";
     if (!uid) return null;
     return `todos_${provider}_${uid}`;
@@ -124,18 +122,24 @@ export default function TodoDashboard() {
     ) => {
       setNotifying(true);
       try {
+        // ผู้ดำเนินการปัจจุบัน พร้อม provider เพื่อแสดง badge LINE/Google/Microsoft ใน LINE notification
+        const actor = {
+          name: session?.user?.name ?? undefined,
+          provider: (session?.user as any)?.provider ?? undefined,
+        };
+
         const body: {
           tasks?: { name: string; status: string; dueDate?: string }[];
           newTask?: {
             name: string;
             priority: Todo["priority"];
             dueDate?: string;
-            createdBy?: string;
+            createdBy?: typeof actor;
           };
           clearEvent?: {
             type: "all_completed" | "all_deleted";
             taskCount: number;
-            clearedBy?: string;
+            clearedBy?: typeof actor;
           };
           lineUserId?: string;
         } = {};
@@ -154,14 +158,14 @@ export default function TodoDashboard() {
             name: opts.newTask.text,
             priority: opts.newTask.priority,
             dueDate: opts.newTask.dueDate,
-            createdBy: session?.user?.name ?? undefined,
+            createdBy: actor,
           };
         }
 
         if (opts.clearEvent) {
           body.clearEvent = {
             ...opts.clearEvent,
-            clearedBy: session?.user?.name ?? undefined,
+            clearedBy: actor,
           };
         }
 
@@ -205,8 +209,6 @@ export default function TodoDashboard() {
     [session, lineUserId]
   );
 
-
-  /* ── Auto-notify overdue todos ── */
   useEffect(() => {
     const checkOverdue = () => {
       const overdue = todos.filter(
